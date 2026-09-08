@@ -147,16 +147,18 @@ W_VALUES = (2, 3, 4)
 
 
 DTYPES = ("bf16", "fp16", "fp32")
-B_VALUES = (1, 2, 3, 4, 8, 16, 32)
+B_VALUES = (1, 2, 3, 4, 7, 8, 15, 16, 17, 31, 32, 33, 64, 128)
 T_VALUES = (1, 2, 3, 4, 5, 16, 17, 32, 54, 55, 56, 63, 64, 65,
             103, 104, 105, 127, 128, 129, 151, 223, 224, 225,
             255, 256, 257, 372, 512, 784, 1024, 1134, 2048, 4096, 8192, 16384)
 D_VALUES = (16, 32, 48, 64, 80, 112, 128, 144, 192, 256, 384, 768,
             1024, 1536, 2048, 2064, 2304, 3072, 4096, 4128, 8192)
+T_VALUES = tuple(sorted(set(T_VALUES + (7, 8, 15, 31, 33, 109, 110, 111, 191, 192, 193, 207, 208, 209, 447, 448, 449, 511, 513, 1023, 1025, 2047, 2049, 4095, 4097, 8191, 8193, 32768, 65536))))
+D_VALUES = tuple(sorted(set(D_VALUES + (240, 272, 496, 512, 528, 1008, 1040, 1520, 1552, 2032, 2080, 3056, 3088, 4080, 4112, 6144, 8176, 8208, 12288, 16384))))
 MAX_ELEMENTS = 4_194_304
 
 
-def build_profiles(random_shapes=64, max_elements=MAX_ELEMENTS):
+def build_profiles(random_shapes=256, max_elements=MAX_ELEMENTS):
     """边界优先，三 dtype 相邻；限制单个 x 大小，不声称限制峰值内存。"""
     import itertools
     shapes, seen = [], set()
@@ -171,11 +173,17 @@ def build_profiles(random_shapes=64, max_elements=MAX_ELEMENTS):
         for T in (1, 2, 3, 4, 5, 63, 64, 65):
             add(1, T, 16, W, "short_and_chunk")
     for D in D_VALUES:
-        add(2, 17, D, 4, "channel")
+
+        for W in W_VALUES:
+            add(2, 17, D, W, "channel")
     for B in B_VALUES:
-        add(B, 65, 64, 4, "batch")
+
+        for W in W_VALUES:
+            add(B, 65, 64, W, "batch")
     for T in T_VALUES:
-        add(1, T, 64, 4, "sequence")
+
+        for W in W_VALUES:
+            add(1, T, 64, W, "sequence")
     for D in (1536, 2048, 2304, 3072, 4128):
         for B, T in ((1, 512), (1, 1024), (1, 2048), (4, 512)):
             add(B, T, D, 4, "model_shape_no_activation")
@@ -184,10 +192,27 @@ def build_profiles(random_shapes=64, max_elements=MAX_ELEMENTS):
     random.Random(SEED_BASE).shuffle(candidates)
     for shape in candidates[:random_shapes]:
         add(*shape, "random")
-    return [dict(p, dtype=dtype, input_layout="BSND", activation=0,
+    profiles = [dict(p, dtype=dtype, input_layout="BSND", activation=0,
                  has_initial_state=False, has_dht=False,
                  name=f"{dtype}_bsnd_B{p['B']}_T{p['T']}_D{p['D']}_W{p['W']}")
             for p in shapes for dtype in DTYPES]
+    # 不等长正长度序列：短长混排、块边界、极端倾斜和顺序变化。
+    lengths_set = ((1, 2, 3, 4, 5), (7, 65, 130), (1, 4096, 2),
+                   (4096, 1, 2), (63, 64, 65), (1, 65536, 1),
+                   tuple([1]*31+[1024]), tuple([17]*63+[65]))
+    for lengths in lengths_set:
+        for D, W, dtype in itertools.product((16, 64, 128, 2048), W_VALUES, DTYPES):
+            if sum(lengths)*D > max_elements:
+                continue
+            q = [0]
+            for length in lengths:
+                q.append(q[-1]+length)
+            profiles.append(dict(B=len(lengths), T=max(lengths), D=D, W=W,
+                dtype=dtype, input_layout="TND", activation=0,
+                has_initial_state=True, has_dht=True, category="ragged",
+                query_start_loc=q, total_tokens=q[-1],
+                name=f"{dtype}_ragged{len(profiles)}_D{D}_W{W}"))
+    return profiles
 
 
 def extended_profiles():
@@ -253,24 +278,22 @@ def populate_case_config(case_config, index):
     case_config.id = index
     case_config.default_seed = spec["seed"]
     case_config.name = "aclnn.causal_conv1d_bwd"
+    # tensor 的 range_values/outlier_values 由 YAML/ATK 决定，保持原值。
     # API 名称、standard 和其余辅助字段由 YAML/ATK 初始化，不覆盖对象类型。
     for cfg in configs:
         if cfg.name in ("x", "y", "dy"):
             cfg.dtype = spec["dtype"]
-            cfg.shape = [B * T, D]
-            cfg.range_values = [-2, 2]
+            cfg.shape = [spec.get("total_tokens", B * T), D]
         elif cfg.name == "weight":
             cfg.dtype = spec["dtype"]
             cfg.shape = [W, D]
-            cfg.range_values = [-2, 2]
         elif cfg.name in ("initial_state", "dht"):
             cfg.dtype = spec["dtype"]
             cfg.shape = [B, W, D]
-            cfg.range_values = [-2, 2]
         elif cfg.name == "queryStartLoc":
             cfg.dtype = "int"
             cfg.shape = None
-            cfg.range_values = [i * T for i in range(B + 1)]
+            cfg.range_values = spec.get("query_start_loc", [i * T for i in range(B + 1)]).copy()
         elif cfg.name == "activation":
             cfg.dtype = "int"
             cfg.shape = None
@@ -327,7 +350,9 @@ def export_atk(specs, template):
         # 保留模板 name 及所有辅助字段，只改变用例编号、随机种子和输入形状/dtype。
         case.update(id=spec["case_id"], default_seed=spec["seed"])
         B, T, D, W = (spec[k] for k in ("B", "T", "D", "W"))
-        logical = [B*T, D] if layout == "TND" else [B, T, D]
+        if "query_start_loc" in spec and layout != "TND":
+            raise ValueError("不等长用例需要 TND 模板")
+        logical = [spec.get("total_tokens", B*T), D] if layout == "TND" else [B, T, D]
         shapes = dict(x=logical, y=logical, weight=[W, D], dy=logical,
                       initial_state=[B, W, D], dht=[B, W, D])
         for cfg in case["inputs"]:
@@ -335,7 +360,7 @@ def export_atk(specs, template):
                 cfg["dtype"] = spec["dtype"]
                 cfg["shape"] = shapes[cfg["name"]].copy()
             elif cfg["name"] == "queryStartLoc":
-                cfg["range_values"] = [i*T for i in range(B+1)]
+                cfg["range_values"] = spec.get("query_start_loc", [i*T for i in range(B+1)]).copy()
         result.append(case)
     return result
 
@@ -350,7 +375,7 @@ def main():
     parser.add_argument("--template", type=Path, help="自定义单条对象或数组模板")
     parser.add_argument("--seeds", type=int, default=3)
     parser.add_argument("--seed-base", type=int, default=SEED_BASE)
-    parser.add_argument("--random-shapes", type=int, default=64)
+    parser.add_argument("--random-shapes", type=int, default=256)
     parser.add_argument("--max-elements", type=int, default=MAX_ELEMENTS)
     parser.add_argument("--soc", choices=("ascend910b", "ascend910_93", "ascend950"), default="ascend910b")
     args = parser.parse_args()
@@ -367,6 +392,8 @@ def main():
                       if p.get("total_tokens", p["B"]*p["T"])*p["D"] <= args.max_elements])
     if not profiles:
         parser.error("内存上限过滤掉了全部用例")
+    if args.format == "marker-atk":
+        profiles = [p for p in profiles if "query_start_loc" not in p]
     specs = [_spec(i, profiles, args.soc, args.seed_base) for i in range(len(profiles)*args.seeds)]
     if args.output.resolve() == args.template.resolve():
         parser.error("请使用新输出路径，避免覆盖原始用例模板")

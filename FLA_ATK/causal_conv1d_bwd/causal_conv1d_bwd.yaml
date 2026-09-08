@@ -8,7 +8,7 @@ aclnn_name: "CausalConv1dBwd"
 aclnn_api_type: "aclnn_causal_conv1d_bwd"
 triton_api_type: "triton_causal_conv1d_bwd"
 generate: generator_causal_conv1d_bwd
-dtype_numbers: 1476
+dtype_numbers: 6579
 extra_numbers: 0
 standard:
   acc:
