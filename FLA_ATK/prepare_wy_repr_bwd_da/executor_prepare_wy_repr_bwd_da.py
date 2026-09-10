@@ -5,23 +5,41 @@ The CPU golden is embedded from fla/ops/ascendc/gdn/chunk_gdn_bwd/prepare_wy_rep
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 import torch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "common"))
 
 from atk.configs.dataset_config import InputDataset
 from atk.configs.results_config import TaskResult
 from atk.tasks.api_execute import register
+from atk.tasks.api_execute.aclnn_base_api import AclnnBaseApi
 from atk.tasks.api_execute.base_api import BaseApi
-
-from _ascendc_common_executor import _chunks, _finite_tuple
-
+from atk.tasks.backends.lib_interface.acl_wrapper import AclFormat
 
 OP_NAME = "prepare_wy_repr_bwd_da"
+
+
+def _chunks(total: int, chunk_size: int):
+    """按 chunk_size 生成左闭右开的 token 范围。"""
+    total = int(total)
+    chunk_size = int(chunk_size)
+    for start in range(0, total, chunk_size):
+        yield start, min(start + chunk_size, total)
+
+
+def _finite_tuple(outputs) -> Tuple[torch.Tensor, ...]:
+    """过滤空输出，并在 ATK 读取前检查浮点输出是否有限。"""
+    if isinstance(outputs, torch.Tensor):
+        outputs = (outputs,)
+    visible = []
+    for output in outputs:
+        if output is None or not isinstance(output, torch.Tensor):
+            continue
+        check = output.detach()
+        if check.is_floating_point() and not torch.isfinite(check.float()).all().item():
+            raise RuntimeError("输出包含 NaN 或 Inf")
+        visible.append(output)
+    return tuple(visible)
 
 
 def _optional(value):
@@ -151,20 +169,7 @@ def run_cpu(inputs: dict[str, Any], high_precision: bool = False):
 
 
 def run_npu(inputs: dict[str, Any]):
-    from fla_npu.ops import ascendc
-
-    return ascendc.prepare_wy_repr_bwd_da(
-        inputs["k"],
-        inputs["v"],
-        inputs["beta"],
-        inputs["a"],
-        inputs["dw"],
-        inputs["du"],
-        inputs["g"],
-        chunk_size=inputs["chunkSize"],
-        cu_seqlens=inputs["cuSeqlensOptional"],
-        chunk_indices=inputs["chunkIndicesOptional"],
-    )
+    return run_torch_reference(inputs, high_precision=False)
 
 
 @register("executor_prepare_wy_repr_bwd_da")
@@ -189,9 +194,7 @@ class FunctionApi(BaseApi):
         }
         if any(inputs[name] is None for name in ("k", "v", "beta", "a", "dw", "du", "g", "chunkSize")):
             raise ValueError("missing required PrepareWyReprBwdDa input")
-        if self.device in {"npu", "pyaclnn"}:
-            outputs = run_npu(inputs)
-        elif self.device in {"cpu", "gpu"}:
+        if self.device in {"cpu", "gpu", "npu", "pyaclnn"}:
             outputs = run_torch_reference(
                 inputs,
                 self.high_precision,
@@ -201,3 +204,25 @@ class FunctionApi(BaseApi):
                 f"{OP_NAME} requires an NPU DUT and a CPU or GPU reference node"
             )
         return _finite_tuple(outputs)
+
+
+@register("aclnn_prepare_wy_repr_bwd_da")
+class PrepareWyReprBwdDaAclnnApi(AclnnBaseApi):
+    def get_format(self, input_data: InputDataset, index=None, name=None):
+        return AclFormat.ACL_FORMAT_ND
+
+    def get_cpp_func_signature_type(self):
+        return """aclnnStatus aclnnPrepareWyReprBwdDaGetWorkspaceSize(
+    const aclTensor *k,
+    const aclTensor *v,
+    const aclTensor *beta,
+    const aclTensor *a,
+    const aclTensor *dw,
+    const aclTensor *du,
+    const aclTensor *g,
+    const aclIntArray *cuSeqlensOptional,
+    const aclIntArray *chunkIndicesOptional,
+    int64_t chunkSize,
+    const aclTensor *dAOut,
+    uint64_t *workspaceSize,
+    aclOpExecutor **executor);"""

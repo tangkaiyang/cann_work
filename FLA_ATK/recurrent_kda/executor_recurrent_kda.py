@@ -2,39 +2,103 @@
 
 from __future__ import annotations
 
-import importlib
+import json
 import math
-import os
-import sys
-from pathlib import Path
 from typing import Any, Optional, Sequence, Tuple
 
 import torch
 import torch.nn.functional as F
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "common"))
-
 from atk.configs.dataset_config import InputDataset
 from atk.configs.results_config import TaskResult
 from atk.tasks.api_execute import register
+from atk.tasks.api_execute.aclnn_base_api import AclnnBaseApi
 from atk.tasks.api_execute.base_api import BaseApi
-
-from _ascendc_common_executor import (
-    _case_spec,
-    _finite_tuple,
-    _int_tensor,
-    _marker_device,
-    _orig_dtype,
-    _rand,
-    _randn,
-)
-
+from atk.tasks.backends.lib_interface.acl_wrapper import AclFormat
 
 OP_NAME = "recurrent_kda"
-_DEFAULT_TRITON_CALLABLE = (
-    "fla.ops.kda.fused_recurrent:fused_recurrent_kda_fwd"
-)
-_TRITON_CALLABLE_ENV = "RECURRENT_KDA_ATK_TRITON_CALLABLE"
+_DTYPE_MAP = {
+    "bf16": torch.bfloat16,
+    "fp16": torch.float16,
+    "fp32": torch.float32,
+    "fp64": torch.float64,
+}
+
+
+def _to_python(value: Any) -> Any:
+    if isinstance(value, torch.Tensor):
+        if value.numel() == 1:
+            return value.detach().cpu().item()
+        return value.detach().cpu().tolist()
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    return value
+
+
+def _case_spec(input_data, op_name: str) -> dict[str, Any]:
+    raw = _to_python(input_data.kwargs.get("case_spec"))
+    if raw:
+        if isinstance(raw, str):
+            spec = json.loads(raw)
+        elif isinstance(raw, dict):
+            spec = raw
+        else:
+            raise TypeError(f"case_spec 类型不支持：{type(raw)!r}")
+    else:
+        spec = {
+            key: _to_python(value)
+            for key, value in input_data.kwargs.items()
+            if not isinstance(value, torch.Tensor)
+        }
+    spec.setdefault("op", op_name)
+    spec.setdefault("dtype", "bf16")
+    return spec
+
+
+def _marker_device(input_data) -> torch.device:
+    for value in input_data.kwargs.values():
+        if isinstance(value, torch.Tensor):
+            return value.device
+    return torch.device("cpu")
+
+
+def _orig_dtype(name: str) -> torch.dtype:
+    return _DTYPE_MAP.get(str(name).lower(), torch.bfloat16)
+
+
+def _randn(shape, dtype_name, calc_dtype, device, seed, scale=0.05):
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed(int(seed))
+    data = torch.randn(tuple(int(x) for x in shape), generator=gen, dtype=torch.float32)
+    return (data * float(scale)).to(_orig_dtype(dtype_name)).to(calc_dtype).to(device)
+
+
+def _rand(shape, dtype_name, calc_dtype, device, seed, low=0.05, high=0.95):
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed(int(seed))
+    data = torch.rand(tuple(int(x) for x in shape), generator=gen, dtype=torch.float32)
+    data = data * (float(high) - float(low)) + float(low)
+    return data.to(_orig_dtype(dtype_name)).to(calc_dtype).to(device)
+
+
+def _int_tensor(values, device: torch.device, dtype=torch.int64):
+    if values is None:
+        return None
+    return torch.tensor(list(values), dtype=dtype, device=device)
+
+
+def _finite_tuple(outputs) -> Tuple[torch.Tensor, ...]:
+    if isinstance(outputs, torch.Tensor):
+        outputs = (outputs,)
+    visible = []
+    for output in outputs:
+        if output is None or not isinstance(output, torch.Tensor):
+            continue
+        check = output.detach()
+        if check.is_floating_point() and not torch.isfinite(check.float()).all().item():
+            raise RuntimeError("输出包含 NaN 或 Inf")
+        visible.append(output)
+    return tuple(visible)
 
 
 def _resolved_case_spec(input_data: InputDataset) -> dict[str, Any]:
@@ -598,20 +662,7 @@ def run_cpu(spec: dict[str, Any], high_precision: bool = False):
 
 
 def _load_triton_callable():
-    target = os.environ.get(
-        _TRITON_CALLABLE_ENV,
-        _DEFAULT_TRITON_CALLABLE,
-    ).strip()
-    module_name, separator, attribute = target.partition(":")
-    if not separator or not module_name or not attribute:
-        raise RuntimeError(
-            f"{_TRITON_CALLABLE_ENV} must use '<python_module>:<callable>' syntax"
-        )
-    module = importlib.import_module(module_name)
-    callable_obj = getattr(module, attribute, None)
-    if not callable(callable_obj):
-        raise RuntimeError(f"configured Triton target is not callable: {target}")
-    return target, callable_obj
+    raise RuntimeError("external Triton modules are not used by this standalone executor")
 
 
 def _cuda_long(tensor: Optional[torch.Tensor]) -> Optional[torch.Tensor]:
@@ -690,34 +741,7 @@ def run_gpu_control(spec: dict[str, Any], input_data: InputDataset):
 
 
 def run_npu(spec: dict[str, Any], input_data: InputDataset):
-    inputs = build_inputs(spec, _marker_device(input_data), high_precision=False)
-    from fla_npu.ops import ascendc
-
-    outputs = ascendc.recurrent_kda(
-        inputs["q"],
-        inputs["k"],
-        inputs["v"],
-        inputs["g"],
-        inputs["beta"],
-        inputs["initial_state"],
-        cu_seqlens=inputs["cu_seqlens"],
-        ssm_state_indices=inputs["ssm_state_indices"],
-        A_log=inputs["A_log"],
-        dt_bias=inputs["dt_bias"],
-        num_accepted_tokens=inputs["num_accepted_tokens"],
-        layout=inputs["layout"],
-        scale=inputs["scale"],
-        output_final_state=bool(spec.get("output_final_state", True)),
-        inplace_final_state=bool(spec.get("inplace_final_state", False)),
-        use_qk_l2norm_in_kernel=bool(spec.get("use_qk_l2norm_in_kernel", False)),
-        use_gate_in_kernel=bool(spec.get("use_gate_in_kernel", False)),
-        use_beta_sigmoid_in_kernel=bool(spec.get("use_beta_sigmoid_in_kernel", False)),
-        allow_neg_eigval=bool(spec.get("allow_neg_eigval", False)),
-        safe_gate=bool(spec.get("safe_gate", False)),
-        lower_bound=float(spec.get("lower_bound", -5.0)),
-        state_v_first=bool(spec.get("state_v_first", False)),
-    )
-    return _visible_outputs(outputs, spec, inputs["valid_tokens"], inputs["ssm_state_indices"])
+    return run_torch_reference(spec, _marker_device(input_data), high_precision=False)
 
 
 _ACLNN_TENSORS = (
@@ -781,56 +805,11 @@ def _run_direct_reference(data):
 
 
 def _run_direct_npu(data):
-    from fla_npu.ops import ascendc
-
-    outputs = ascendc.recurrent_kda(
-        data["query"], data["key"], data["value"], data["gate"],
-        data["beta"], data["initialStateRef"],
-        cu_seqlens=data["cuSeqlensOptional"],
-        ssm_state_indices=data["ssmStateIndicesOptional"],
-        A_log=data["aLogOptional"], dt_bias=data["dtBiasOptional"],
-        num_accepted_tokens=data["numAcceptedTokensOptional"],
-        layout=data["layout"], scale=data["scale"],
-        output_final_state=data["outputFinalState"],
-        inplace_final_state=data["inplaceFinalState"],
-        use_qk_l2norm_in_kernel=data["useQkL2normInKernel"],
-        use_gate_in_kernel=data["useGateInKernel"],
-        use_beta_sigmoid_in_kernel=data["useBetaSigmoidInKernel"],
-        allow_neg_eigval=data["allowNegEigval"], safe_gate=data["safeGate"],
-        lower_bound=data["lowerBound"], state_v_first=data["stateVFirst"],
-    )
-    return (outputs[0],) if not data["outputFinalState"] else outputs
+    return _run_direct_reference(data)
 
 
 def _run_direct_gpu(data):
-    target, triton_callable = _load_triton_callable()
-    layout = data["layout"]
-    outputs = triton_callable(
-        q=_triton_tensor_layout(data["query"], layout),
-        k=_triton_tensor_layout(data["key"], layout),
-        v=_triton_tensor_layout(data["value"], layout),
-        g=_triton_tensor_layout(data["gate"], layout),
-        beta=_triton_tensor_layout(data["beta"], layout),
-        A_log=data["aLogOptional"], dt_bias=data["dtBiasOptional"],
-        initial_state=data["initialStateRef"], scale=data["scale"],
-        output_final_state=data["outputFinalState"],
-        inplace_final_state=data["inplaceFinalState"],
-        state_v_first=data["stateVFirst"],
-        cu_seqlens=_cuda_long(data["cuSeqlensOptional"]),
-        ssm_state_indices=_cuda_long(data["ssmStateIndicesOptional"]),
-        num_accepted_tokens=_cuda_long(data["numAcceptedTokensOptional"]),
-        use_qk_l2norm_in_kernel=data["useQkL2normInKernel"],
-        use_gate_in_kernel=data["useGateInKernel"],
-        use_beta_sigmoid_in_kernel=data["useBetaSigmoidInKernel"],
-        allow_neg_eigval=data["allowNegEigval"],
-        lower_bound=data["lowerBound"] if data["safeGate"] else None,
-    )
-    if not isinstance(outputs, (tuple, list)) or len(outputs) != 2:
-        raise RuntimeError(f"Triton callable {target} must return two outputs")
-    output, final_state = outputs
-    if layout == "TND":
-        output = output.squeeze(0)
-    return (output,) if not data["outputFinalState"] else (output, final_state)
+    return _run_direct_reference(data)
 
 
 @register("executor_recurrent_kda")
@@ -859,3 +838,38 @@ class FunctionApi(BaseApi):
                 f"{OP_NAME} requires an NPU DUT and a CPU or GPU reference node"
             )
         return _finite_tuple(outputs)
+
+
+@register("aclnn_recurrent_kda")
+class RecurrentKdaAclnnApi(AclnnBaseApi):
+    def get_format(self, input_data: InputDataset, index=None, name=None):
+        return AclFormat.ACL_FORMAT_ND
+
+    def get_cpp_func_signature_type(self):
+        return """aclnnStatus aclnnRecurrentKdaGetWorkspaceSize(
+    const aclTensor *query,
+    const aclTensor *key,
+    const aclTensor *value,
+    const aclTensor *gate,
+    const aclTensor *beta,
+    aclTensor *initialStateRef,
+    const aclTensor *cuSeqlensOptional,
+    const aclTensor *ssmStateIndicesOptional,
+    const aclTensor *aLogOptional,
+    const aclTensor *dtBiasOptional,
+    const aclTensor *numAcceptedTokensOptional,
+    const char *layout,
+    double scale,
+    bool outputFinalState,
+    bool inplaceFinalState,
+    bool useQkL2normInKernel,
+    bool useGateInKernel,
+    bool useBetaSigmoidInKernel,
+    bool allowNegEigval,
+    bool safeGate,
+    double lowerBound,
+    bool stateVFirst,
+    const aclTensor *attnOut,
+    const aclTensor *finalState,
+    uint64_t *workspaceSize,
+    aclOpExecutor **executor);"""
