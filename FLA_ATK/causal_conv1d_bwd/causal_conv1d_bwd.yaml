@@ -1,30 +1,21 @@
-# 真实输入版：与用户 JSON 的九个 inputs 对应。
-# generator 统一生成相关 shape/dtype/queryStartLoc，避免独立随机导致不匹配。
-api: "pytorch"
-api_type: "executor_causal_conv1d_bwd"
-version: "v2.1"
-name: "aclnn.causal_conv1d_bwd"
-aclnn_name: "CausalConv1dBwd"
-aclnn_api_type: "aclnn_causal_conv1d_bwd"
-triton_api_type: "triton_causal_conv1d_bwd"
+api: pytorch
+api_type: executor_causal_conv1d_bwd
+aclnn_api_type: aclnn_causal_conv1d_bwd
+version: v2.1
+name: aclnn.causal_conv1d_bwd
+aclnn_name: CausalConv1dBwd
 generate: generator_causal_conv1d_bwd
-dtype_numbers: 6579
+dtype_numbers: 50
 extra_numbers: 0
 standard:
-  acc:
-    cv_fused_double_benchmark:
-      max_re_ratio: 5
-      avg_re_ratio: 1.5
-      root_mean_squared_ratio: 1.5
+  acc: causal_conv1d_bwd_allclose
   perf: not_key
-  mem: 1.1
 inputs:
   - name: x
     type: tensor
     required: true
-    backward: true
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -32,15 +23,14 @@ inputs:
         values: []
     shapes:
       dim_numbers:
-        values: [2]
+        values: [2, 3]
       dim_values:
-        values: [16, 64]
-  - name: y
+        values: [[1, 8], [64, 32768], [16, 1536]]
+  - name: yOptional
     type: tensor
-    required: true
-    backward: true
+    required: false
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -48,15 +38,14 @@ inputs:
         values: []
     shapes:
       dim_numbers:
-        values: [2]
+        values: [2, 3, 4]
       dim_values:
-        values: [16, 64]
+        values: [[1, 8], [64, 32768], [16, 1536]]
   - name: weight
     type: tensor
     required: true
-    backward: true
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -66,13 +55,12 @@ inputs:
       dim_numbers:
         values: [2]
       dim_values:
-        values: [2, 16]
+        values: [[2, 4], [16, 1536]]
   - name: dy
     type: tensor
     required: true
-    backward: true
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -80,15 +68,14 @@ inputs:
         values: []
     shapes:
       dim_numbers:
-        values: [2]
+        values: [2, 3, 4]
       dim_values:
-        values: [16, 64]
-  - name: initial_state
+        values: [[1, 8], [64, 32768], [16, 1536]]
+  - name: initialStateOptional
     type: tensor
-    required: true
-    backward: true
+    required: false
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -98,13 +85,12 @@ inputs:
       dim_numbers:
         values: [3]
       dim_values:
-        values: [1, 2, 16]
-  - name: dht
+        values: [[1, 8], [2, 4], [16, 1536]]
+  - name: dhtOptional
     type: tensor
-    required: true
-    backward: true
+    required: false
     dtypes:
-      values: ["bf16", "fp16", "fp32"]
+      values: [bf16, fp16, fp32]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -114,13 +100,12 @@ inputs:
       dim_numbers:
         values: [3]
       dim_values:
-        values: [1, 2, 16]
-  - name: queryStartLoc
+        values: [[1, 8], [2, 4], [16, 1536]]
+  - name: queryStartLocOptional
     type: attr
-    required: true
-    backward: false
+    required: false
     dtypes:
-      values: ["int"]
+      values: [int]
     ranges:
       valid:
         values: [[0, 64]]
@@ -129,22 +114,20 @@ inputs:
   - name: activation
     type: attr
     required: true
-    backward: false
     dtypes:
-      values: ["int"]
+      values: [int]
     ranges:
       valid:
-        values: [0]
+        values: [0, 1, 2]
       invalid:
         values: []
-  - name: inputLayout
+  - name: inputLayoutOptional
     type: attr
-    required: true
-    backward: false
+    required: false
     dtypes:
-      values: ["string"]
+      values: [string]
     ranges:
       valid:
-        values: ["TND"]
+        values: [BSND, BSH, TND, BNSD, NTD]
       invalid:
         values: []

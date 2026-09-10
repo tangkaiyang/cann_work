@@ -31,6 +31,10 @@ DTYPE_MAP = {
 }
 
 
+def _optional_input(value):
+    return None if value is None or (isinstance(value, str) and value == "null") else value
+
+
 @ACCURACY_REGISTRY.register("causal_conv1d_bwd_allclose")
 class CausalConv1dBwdAccuracyCompare(BaseAccuracyCompare):
     def compute_accuracy_result(self, local_output, remote_output, data_file):
@@ -112,7 +116,7 @@ def _pattern_tensor(shape, dtype, stride, mod, scale):
 def _normalize_layout(input_layout):
     layout = str(input_layout or "BSND").upper()
     if layout in ("BSH", "BSND"):
-        return "BSND"
+        return layout
     if layout in ("TND", "BNSD", "NTD"):
         return layout
     raise ValueError(f"unsupported inputLayout: {input_layout}")
@@ -160,32 +164,17 @@ def _layout_meta(tensor, input_layout):
 
 
 def _query_start_loc_for_layout(input_data, input_layout):
-    from numbers import Integral
-
+    supplied = _optional_input(input_data.kwargs.get("queryStartLocOptional"))
+    if supplied is not None:
+        return supplied
+    if input_layout not in ("TND", "NTD"):
+        return None
     x = input_data.kwargs["x"]
-    layout = _normalize_layout(input_layout)
-    if layout not in ("TND", "NTD"):
-        return [0, int(x.shape[1])]
-
-    # Preserve packed-sequence boundaries; a scalar is not a valid aclIntArray.
-    qsl = input_data.kwargs.get("queryStartLoc")
-    if torch.is_tensor(qsl):
-        if qsl.dim() != 1 or qsl.dtype != torch.int64:
-            raise ValueError("queryStartLoc tensor must be 1D int64")
-        qsl = qsl.detach().cpu().tolist()
-    if not isinstance(qsl, (list, tuple)) or len(qsl) < 2:
-        raise ValueError("TND/NTD queryStartLoc must be an integer list of length B+1")
-    if any(isinstance(v, bool) or not isinstance(v, Integral) for v in qsl):
-        raise ValueError("queryStartLoc must contain integers")
-    qsl = [int(v) for v in qsl]
-    if qsl[0] != 0 or qsl[-1] != x.shape[0] or any(a > b for a, b in zip(qsl, qsl[1:])):
-        raise ValueError("queryStartLoc must start at 0, end at totalTokens and be non-decreasing")
-    expected = (len(qsl) - 1, int(input_data.kwargs["weight"].shape[0]), int(x.shape[-1]))
-    for name in ("initial_state", "dht"):
-        state = input_data.kwargs.get(name)
-        if state is not None and tuple(state.shape) != expected:
-            raise ValueError(f"{name} must be {expected} according to queryStartLoc, got {tuple(state.shape)}")
-    return qsl
+    t = x.shape[0] if x.dim() == 2 else x.shape[1]
+    # The aclnn signature expects aclIntArray even when fixed-layout kernels
+    # ignore queryStartLoc. Passing a list keeps ATK's pyaclnn converter on the
+    # aclCreateIntArray path instead of converting the YAML int range to c_long.
+    return [0, int(t)]
 
 
 def causal_conv1d_preactivation(x, weight, initial_state=None):
@@ -289,7 +278,7 @@ def _causal_conv1d_bwd_cpu_fixed(
     input_dtype = input_dtype or x.dtype
 
     x_f = _to_compute_tensor(x, input_dtype)
-    y_f = _to_compute_tensor(y, input_dtype)
+    y_f = _to_compute_tensor(y, input_dtype) if y is not None else None
     weight_f = _to_compute_tensor(weight, input_dtype)
     dy_f = _to_compute_tensor(dy, input_dtype)
     state_f = _to_compute_tensor(initial_state, input_dtype) if initial_state is not None else None
@@ -404,20 +393,22 @@ class CausalConv1dBwdApi(BaseApi):
     def __call__(self, input_data: InputDataset, with_output: bool = False):
         return causal_conv1d_bwd_cpu(
             input_data.kwargs["x"],
-            input_data.kwargs["y"],
+            _optional_input(input_data.kwargs.get("yOptional")),
             input_data.kwargs["weight"],
             input_data.kwargs["dy"],
-            input_data.kwargs["initial_state"],
-            input_data.kwargs["dht"],
-            input_data.kwargs["queryStartLoc"],
+            _optional_input(input_data.kwargs.get("initialStateOptional")),
+            _optional_input(input_data.kwargs.get("dhtOptional")),
+            _optional_input(input_data.kwargs.get("queryStartLocOptional")),
             input_data.kwargs["activation"],
-            input_data.kwargs.get("inputLayout", "BSND"),
+            input_data.kwargs.get("inputLayoutOptional", "BSND"),
             self._target_input_dtype(),
         )
 
     def init_by_input_data(self, input_data: InputDataset):
         dtype = self._target_input_dtype()
-        input_layout = _normalize_layout(input_data.kwargs.get("inputLayout", "BSND"))
+        input_layout = _normalize_layout(
+            input_data.kwargs.get("inputLayoutOptional", "BSND")
+        )
         x = input_data.kwargs["x"].to(dtype).contiguous()
         weight = input_data.kwargs["weight"].to(dtype).contiguous()
         dy = input_data.kwargs["dy"].to(dtype).contiguous()
@@ -425,31 +416,53 @@ class CausalConv1dBwdApi(BaseApi):
         w = weight.shape[0]
         activation = int(input_data.kwargs["activation"])
 
-        initial_state = input_data.kwargs["initial_state"].to(dtype).contiguous()
-        dht = input_data.kwargs["dht"].to(dtype).contiguous()
+        initial_state = _optional_input(input_data.kwargs.get("initialStateOptional"))
+        initial_state = (
+            initial_state.to(dtype).contiguous()
+            if initial_state is not None
+            else None
+        )
+        dht = _optional_input(input_data.kwargs.get("dhtOptional"))
+        dht = dht.to(dtype).contiguous() if dht is not None else None
 
+        x_logic = x
         query_start_loc = _query_start_loc_for_layout(input_data, input_layout)
-        # y is a public preactivation input. Preserve ATK/YAML-provided values;
-        # recomputing it as one sequence would also cross packed boundaries.
-        y = input_data.kwargs["y"].to(dtype).contiguous()
+
+        y = _optional_input(input_data.kwargs.get("yOptional"))
+        if y is not None:
+            y = y.to(dtype).contiguous()
+        elif activation != 0:
+            if x_logic.dim() == 2:
+                y_logic = causal_conv1d_preactivation(
+                    x_logic.detach().cpu().unsqueeze(0),
+                    weight.detach().cpu(),
+                    initial_state.detach().cpu() if initial_state is not None else None,
+                ).squeeze(0).to(dtype)
+            else:
+                y_logic = causal_conv1d_preactivation(
+                    x_logic.detach().cpu(),
+                    weight.detach().cpu(),
+                    initial_state.detach().cpu() if initial_state is not None else None,
+                ).to(dtype)
+            y = _logical_to_input(y_logic, input_layout, n_heads, head_dim).to(dtype)
 
         if self.device == "pyaclnn":
             x = x.npu()
-            y = y.npu()
+            y = y.npu() if y is not None else None
             weight = weight.npu()
             dy = dy.npu()
-            initial_state = initial_state.npu()
-            dht = dht.npu()
+            initial_state = initial_state.npu() if initial_state is not None else None
+            dht = dht.npu() if dht is not None else None
 
         input_data.kwargs["x"] = x
-        input_data.kwargs["y"] = y
+        input_data.kwargs["yOptional"] = y
         input_data.kwargs["weight"] = weight
         input_data.kwargs["dy"] = dy
-        input_data.kwargs["initial_state"] = initial_state
-        input_data.kwargs["dht"] = dht
-        input_data.kwargs["queryStartLoc"] = query_start_loc
+        input_data.kwargs["initialStateOptional"] = initial_state
+        input_data.kwargs["dhtOptional"] = dht
+        input_data.kwargs["queryStartLocOptional"] = query_start_loc
         input_data.kwargs["activation"] = activation
-        input_data.kwargs["inputLayout"] = input_layout
+        input_data.kwargs["inputLayoutOptional"] = input_layout
 
     def get_format(self, input_data: InputDataset, index=None, name=None):
         return AclFormat.ACL_FORMAT_ND
@@ -458,9 +471,13 @@ class CausalConv1dBwdApi(BaseApi):
 @register("aclnn_causal_conv1d_bwd")
 class CausalConv1dBwdAclnnApi(AclnnBaseApi):
     def init_by_input_data(self, input_data: InputDataset):
-        input_layout = _normalize_layout(input_data.kwargs.get("inputLayout", "BSND"))
-        input_data.kwargs["inputLayout"] = input_layout
-        input_data.kwargs["queryStartLoc"] = _query_start_loc_for_layout(input_data, input_layout)
+        input_layout = _normalize_layout(
+            input_data.kwargs.get("inputLayoutOptional", "BSND")
+        )
+        input_data.kwargs["inputLayoutOptional"] = input_layout
+        input_data.kwargs["queryStartLocOptional"] = _query_start_loc_for_layout(
+            input_data, input_layout
+        )
         return super().init_by_input_data(input_data)
 
     def get_format(self, input_data: InputDataset, index=None, name=None):

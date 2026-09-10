@@ -1,0 +1,34 @@
+api: pytorch
+api_type: executor_recurrent_kda
+version: v2.1
+name: recurrent_kda
+aclnn_name: RecurrentKda
+generate: generator_recurrent_kda
+dtype_numbers: 100
+extra_numbers: 0
+standard:
+  acc: {cv_fused_double_benchmark: {max_re_ratio: 5, avg_re_ratio: 1.5, root_mean_squared_ratio: 1.5}}
+  perf: not_key
+inputs:
+  - {name: query, type: tensor, required: true, dtypes: {values: [bf16]}, ranges: {valid: {values: [[-0.1, 0.1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [3, 4]}, dim_values: {values: [1, 2, 1, 128]}}}
+  - {name: key, type: tensor, required: true, dtypes: {values: [bf16]}, ranges: {valid: {values: [[-0.1, 0.1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [3, 4]}, dim_values: {values: [1, 2, 1, 128]}}}
+  - {name: value, type: tensor, required: true, dtypes: {values: [bf16]}, ranges: {valid: {values: [[-0.1, 0.1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [3, 4]}, dim_values: {values: [1, 2, 1, 128]}}}
+  - {name: gate, type: tensor, required: true, dtypes: {values: [fp32, bf16, fp16]}, ranges: {valid: {values: [[-0.1, 0.1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [3, 4]}, dim_values: {values: [1, 2, 1, 128]}}}
+  - {name: beta, type: tensor, required: true, dtypes: {values: [fp32, bf16, fp16]}, ranges: {valid: {values: [[0.1, 0.9]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [2, 3]}, dim_values: {values: [1, 2, 1]}}}
+  - {name: initialStateRef, type: tensor, required: true, dtypes: {values: [fp32, bf16]}, ranges: {valid: {values: [[-0.01, 0.01]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [4]}, dim_values: {values: [1, 1, 128, 128]}}}
+  - {name: cuSeqlensOptional, type: tensor, required: false, dtypes: {values: [int32, int64]}, ranges: {valid: {values: [[0, 2]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [1]}, dim_values: {values: [2]}}}
+  - {name: ssmStateIndicesOptional, type: tensor, required: false, dtypes: {values: [int32, int64]}, ranges: {valid: {values: [[0, 1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [1, 2]}, dim_values: {values: [2]}}}
+  - {name: aLogOptional, type: tensor, required: false, dtypes: {values: [fp32]}, ranges: {valid: {values: [[-1, -0.2]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [1]}, dim_values: {values: [1]}}}
+  - {name: dtBiasOptional, type: tensor, required: false, dtypes: {values: [fp32]}, ranges: {valid: {values: [[-0.1, 0.1]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [1, 2]}, dim_values: {values: [128]}}}
+  - {name: numAcceptedTokensOptional, type: tensor, required: false, dtypes: {values: [int32, int64]}, ranges: {valid: {values: [[1, 8]]}, invalid: {values: []}}, shapes: {dim_numbers: {values: [1]}, dim_values: {values: [1]}}}
+  - {name: layout, type: attr, required: true, dtypes: {values: [string]}, ranges: {valid: {values: [BSND, TND]}, invalid: {values: []}}}
+  - {name: scale, type: attr, required: true, dtypes: {values: [float]}, ranges: {valid: {values: [0.08838834764831845]}, invalid: {values: []}}}
+  - {name: outputFinalState, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: inplaceFinalState, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: useQkL2normInKernel, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: useGateInKernel, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: useBetaSigmoidInKernel, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: allowNegEigval, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: safeGate, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
+  - {name: lowerBound, type: attr, required: true, dtypes: {values: [float]}, ranges: {valid: {values: [-5.0, -2.5]}, invalid: {values: []}}}
+  - {name: stateVFirst, type: attr, required: true, dtypes: {values: [bool]}, ranges: {valid: {values: [false, true]}, invalid: {values: []}}}
