@@ -160,12 +160,32 @@ def _layout_meta(tensor, input_layout):
 
 
 def _query_start_loc_for_layout(input_data, input_layout):
+    from numbers import Integral
+
     x = input_data.kwargs["x"]
-    t = x.shape[0] if x.dim() == 2 else x.shape[1]
-    # The aclnn signature expects aclIntArray even when fixed-layout kernels
-    # ignore queryStartLoc. Passing a list keeps ATK's pyaclnn converter on the
-    # aclCreateIntArray path instead of converting the YAML int range to c_long.
-    return [0, int(t)]
+    layout = _normalize_layout(input_layout)
+    if layout not in ("TND", "NTD"):
+        return [0, int(x.shape[1])]
+
+    # Preserve packed-sequence boundaries; a scalar is not a valid aclIntArray.
+    qsl = input_data.kwargs.get("queryStartLoc")
+    if torch.is_tensor(qsl):
+        if qsl.dim() != 1 or qsl.dtype != torch.int64:
+            raise ValueError("queryStartLoc tensor must be 1D int64")
+        qsl = qsl.detach().cpu().tolist()
+    if not isinstance(qsl, (list, tuple)) or len(qsl) < 2:
+        raise ValueError("TND/NTD queryStartLoc must be an integer list of length B+1")
+    if any(isinstance(v, bool) or not isinstance(v, Integral) for v in qsl):
+        raise ValueError("queryStartLoc must contain integers")
+    qsl = [int(v) for v in qsl]
+    if qsl[0] != 0 or qsl[-1] != x.shape[0] or any(a > b for a, b in zip(qsl, qsl[1:])):
+        raise ValueError("queryStartLoc must start at 0, end at totalTokens and be non-decreasing")
+    expected = (len(qsl) - 1, int(input_data.kwargs["weight"].shape[0]), int(x.shape[-1]))
+    for name in ("initial_state", "dht"):
+        state = input_data.kwargs.get(name)
+        if state is not None and tuple(state.shape) != expected:
+            raise ValueError(f"{name} must be {expected} according to queryStartLoc, got {tuple(state.shape)}")
+    return qsl
 
 
 def causal_conv1d_preactivation(x, weight, initial_state=None):
@@ -408,26 +428,10 @@ class CausalConv1dBwdApi(BaseApi):
         initial_state = input_data.kwargs["initial_state"].to(dtype).contiguous()
         dht = input_data.kwargs["dht"].to(dtype).contiguous()
 
-        x_logic = x
-        if input_layout in ("TND", "NTD"):
-            query_start_loc = [0, t]
-        else:
-            query_start_loc = [0, t]
-
-        if activation == 0:
-            y = torch.zeros_like(dy)
-        else:
-            if x_logic.dim() == 2:
-                y_logic = causal_conv1d_preactivation(
-                    x_logic.detach().cpu().unsqueeze(0),
-                    weight.detach().cpu(),
-                    initial_state.detach().cpu(),
-                ).squeeze(0).to(dtype)
-            else:
-                y_logic = causal_conv1d_preactivation(
-                    x_logic.detach().cpu(), weight.detach().cpu(), initial_state.detach().cpu()
-                ).to(dtype)
-            y = _logical_to_input(y_logic, input_layout, n_heads, head_dim).to(dtype)
+        query_start_loc = _query_start_loc_for_layout(input_data, input_layout)
+        # y is a public preactivation input. Preserve ATK/YAML-provided values;
+        # recomputing it as one sequence would also cross packed boundaries.
+        y = input_data.kwargs["y"].to(dtype).contiguous()
 
         if self.device == "pyaclnn":
             x = x.npu()
