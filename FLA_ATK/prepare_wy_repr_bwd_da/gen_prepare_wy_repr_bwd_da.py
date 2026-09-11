@@ -36,7 +36,7 @@ def _profile(index):
         "T": time,
         "K": 128,
         "V": VALUE_DIMS[(index // 11) % 2],
-        "chunkSize": CHUNK_SIZES[(index // 13) % 2],
+        "chunkSize": CHUNK_SIZES[(index // 13) % len(CHUNK_SIZES)],
         "varlen": varlen,
     }
 
