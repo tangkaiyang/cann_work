@@ -102,15 +102,17 @@ inputs:
       dim_values:
         values: [[1, 8], [2, 4], [16, 1536]]
   - name: queryStartLocOptional
-    type: attr
+    type: attrs
     required: false
     dtypes:
-      values: [int]
+      values: [int64_t]
     ranges:
       valid:
         values: [[0, 64]]
       invalid:
         values: []
+    tuple_numbers:
+      values: [2]
   - name: activation
     type: attr
     required: true

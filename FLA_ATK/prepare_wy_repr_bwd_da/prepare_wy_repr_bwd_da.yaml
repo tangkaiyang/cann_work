@@ -121,25 +121,29 @@ inputs:
       dim_values:
         values: [1, 1, 16]
   - name: cuSeqlensOptional
-    type: attr
+    type: attrs
     required: false
     dtypes:
-      values: [int]
+      values: [int64_t]
     ranges:
       valid:
         values: [[0, 16]]
       invalid:
         values: []
+    tuple_numbers:
+      values: [2]
   - name: chunkIndicesOptional
-    type: attr
+    type: attrs
     required: false
     dtypes:
-      values: [int]
+      values: [int64_t]
     ranges:
       valid:
         values: [[0, 0]]
       invalid:
         values: []
+    tuple_numbers:
+      values: [2]
   - name: chunkSize
     type: attr
     required: true

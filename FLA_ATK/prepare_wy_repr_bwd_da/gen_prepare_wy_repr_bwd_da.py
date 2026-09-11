@@ -95,8 +95,11 @@ def configure_case(case_config, index):
         offsets = _offsets(t, 20260817 + index)
         cfg["cuSeqlensOptional"].required = True
         cfg["cuSeqlensOptional"].range_values = offsets
+        cfg["cuSeqlensOptional"].tuple_numbers = len(offsets)
         cfg["chunkIndicesOptional"].required = True
-        cfg["chunkIndicesOptional"].range_values = _chunk_indices(offsets, bt)
+        chunk_indices = _chunk_indices(offsets, bt)
+        cfg["chunkIndicesOptional"].range_values = chunk_indices
+        cfg["chunkIndicesOptional"].tuple_numbers = len(chunk_indices)
     else:
         cfg["cuSeqlensOptional"].required = False
         cfg["cuSeqlensOptional"].range_values = "null"
