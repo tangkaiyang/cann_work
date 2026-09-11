@@ -103,7 +103,7 @@ inputs:
         values: [[1, 8], [2, 4], [16, 1536]]
   - name: queryStartLocOptional
     type: attr_tuple
-    required: false
+    required: true
     dtypes:
       values: [int]
     tuple_numbers:

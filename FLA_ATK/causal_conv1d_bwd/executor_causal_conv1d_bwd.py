@@ -164,13 +164,15 @@ def _layout_meta(tensor, input_layout):
 
 
 def _query_start_loc_for_layout(input_data, input_layout):
-    if input_layout not in ("TND", "NTD"):
-        return None
     x = input_data.kwargs["x"]
     t = x.shape[0] if x.dim() == 2 else x.shape[1]
-    # The aclnn signature expects aclIntArray even when fixed-layout kernels
-    # ignore queryStartLoc. Passing a list keeps ATK's pyaclnn converter on the
-    # aclCreateIntArray path instead of converting the YAML int range to c_long.
+    supplied = _optional_input(input_data.kwargs.get("queryStartLocOptional"))
+    if isinstance(supplied, (list, tuple)) and len(supplied) == 2:
+        values = [int(value) for value in supplied]
+        if values[0] == 0 and values[-1] == int(t):
+            return values
+    # Always keep ATK on the aclCreateIntArray conversion path. Fixed layouts
+    # ignore this optional array, while TND/NTD consume the same [0, T] tuple.
     return [0, int(t)]
 
 
