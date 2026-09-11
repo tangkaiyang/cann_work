@@ -6,13 +6,16 @@
 长度、非二次幂 batch、单头及分组头；beta 由 executor 固定为 FP32，
 gtype 使用原有四种 dtype/gtype 配对。继续沿用已有精度组合过滤规则。
 executor 尚未构造变长元数据，新增用例均为 varlen=False。
-使用 -dt 大于 200 可执行新增用例；完整数量为 len(PROFILES)。
+默认 BF16/FP16 各 5000 条，共 10000 条；双 marker 默认使用 -dt 5000。
+支持更大的 -dt：超出默认池后按 BF16/FP16 交替复用合法 shape，使用新的
+case_id 和 seed；生成数量不受默认池大小限制，shape 并非无限去重。
 """
 
 from __future__ import annotations
 
 import json
 import random
+from collections import Counter
 from copy import deepcopy
 
 try:
@@ -28,6 +31,8 @@ except ModuleNotFoundError as exc:
 
 OP_NAME = "prepare_wy_repr_bwd_da"
 CASE_COUNT = 200
+CASES_PER_DTYPE = 5000
+TOTAL_CASE_COUNT = 2 * CASES_PER_DTYPE
 SMALL_ELEMENT_LIMIT = 20_000_000
 
 
@@ -301,7 +306,7 @@ GENERAL_HEAD_PAIRS = ((1, 1), (1, 2), (1, 4), (2, 2), (2, 6), (3, 3), (3, 6), (4
 GENERAL_ELEMENT_CAP = 2_000_000
 
 
-def _build_generalized_profiles(existing_profiles):
+def _build_generalized_profiles(existing_profiles, extra_lengths=()):
     """定向边界优先，其余候选固定种子打乱；不改变原有 case ID。"""
     shapes = []
     for chunk_size in CHUNK_SIZES:
@@ -315,7 +320,7 @@ def _build_generalized_profiles(existing_profiles):
         for HK, HV in GENERAL_HEAD_PAIRS
         for chunk_size in CHUNK_SIZES
         for T in (1, 2, 8, 24, chunk_size - 1, chunk_size, chunk_size + 1,
-                  2 * chunk_size - 1, 2 * chunk_size, 2 * chunk_size + 1, 512)
+                  2 * chunk_size - 1, 2 * chunk_size, 2 * chunk_size + 1, 512) + tuple(extra_lengths)
         for V in SMALL_V_VALUES
     ]
     random.Random(20260911).shuffle(candidates)
@@ -353,7 +358,34 @@ def _build_generalized_profiles(existing_profiles):
 
 
 BASE_PROFILES = _build_profiles()
-PROFILES = BASE_PROFILES + _build_generalized_profiles(BASE_PROFILES)
+
+
+def _build_balanced_profiles():
+    # 原有 4487 条保持顺序及编号，扩充短长度空间后按 dtype 配额追加。
+    profiles = BASE_PROFILES + _build_generalized_profiles(BASE_PROFILES)
+    counts = Counter(profile["dtype"] for profile in profiles)
+    if any(count > CASES_PER_DTYPE for count in counts.values()):
+        raise RuntimeError(f"existing profiles exceed dtype quota: {counts}")
+    candidates = _build_generalized_profiles(profiles, extra_lengths=range(3, 64))
+    for profile in candidates:
+        dtype = profile["dtype"]
+        if counts[dtype] < CASES_PER_DTYPE:
+            profiles.append(profile)
+            counts[dtype] += 1
+        if len(profiles) == TOTAL_CASE_COUNT:
+            break
+    expected = {"bf16": CASES_PER_DTYPE, "fp16": CASES_PER_DTYPE}
+    if dict(counts) != expected:
+        raise RuntimeError(f"insufficient unique profiles: expected {expected}, got {counts}")
+    return profiles
+
+
+PROFILES = _build_balanced_profiles()
+_EXTRA_DTYPES = ("bf16", "fp16")
+_PROFILES_BY_DTYPE = {
+    dtype: tuple(profile for profile in PROFILES if profile["dtype"] == dtype)
+    for dtype in _EXTRA_DTYPES
+}
 
 TENSOR_NAMES = ("k", "v", "beta", "A", "g", "dw", "du")
 TENSOR_RANGE_VALUES = (
@@ -380,9 +412,17 @@ def _dtype(dtype):
     return {"bf16": "bf16", "fp16": "fp16", "fp32": "fp32"}.get(dtype, "bf16")
 
 def _spec(index):
-    if not 0 <= index < len(PROFILES):
-        raise IndexError(f"case index {index} is outside [0, {len(PROFILES)})")
-    profile = deepcopy(PROFILES[index])
+    if index < 0:
+        raise IndexError(f"case index must be non-negative, got {index}")
+    if index < len(PROFILES):
+        profile = deepcopy(PROFILES[index])
+    else:
+        extra_index = index - len(PROFILES)
+        dtype = _EXTRA_DTYPES[extra_index % len(_EXTRA_DTYPES)]
+        candidates = _PROFILES_BY_DTYPE[dtype]
+        profile_index = (extra_index // len(_EXTRA_DTYPES)) % len(candidates)
+        profile = deepcopy(candidates[profile_index])
+        profile["name"] = f"{profile['name']}_repeat_{index}"
     scale_metadata = {
         key: profile.pop(key) for key in SCALE_METADATA_KEYS if key in profile
     }
