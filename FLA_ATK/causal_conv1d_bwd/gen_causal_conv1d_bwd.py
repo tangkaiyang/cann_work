@@ -12,7 +12,7 @@ except ModuleNotFoundError as exc:
     CaseGenerator = GENERATOR_REGISTRY = CaseConfig = None
 
 
-LAYOUTS = {"BSND", "BSH", "TND", "BNSD", "NTD"}
+LAYOUTS = ("BSND", "BSH", "TND", "BNSD", "NTD")
 FLOAT_DTYPES = {"bf16", "fp16", "fp32"}
 
 
@@ -32,7 +32,7 @@ def _align16(value):
     return max(16, ((int(value) + 15) // 16) * 16)
 
 
-def configure_case(case_config):
+def configure_case(case_config, index=0):
     cfg = _configs(case_config)
     expected = {
         "x", "yOptional", "weight", "dy", "initialStateOptional",
@@ -52,8 +52,9 @@ def configure_case(case_config):
     ):
         cfg[name].dtype = dtype
 
-    layout = str(_value(cfg["inputLayoutOptional"], "BSND")).upper()
-    layout = layout if layout in LAYOUTS else "BSND"
+    # Optional string attributes may arrive as null in every ATK seed. Cycle the
+    # documented layouts explicitly so attr_tuple cases are actually exercised.
+    layout = LAYOUTS[index % len(LAYOUTS)]
     cfg["inputLayoutOptional"].range_values = layout
     activation = int(_value(cfg["activation"], 0))
     activation = activation if activation in (0, 1, 2) else 0
@@ -106,4 +107,4 @@ if GENERATOR_REGISTRY is not None:
     @GENERATOR_REGISTRY.register("generator_causal_conv1d_bwd")
     class CausalConv1dBwdGenerator(CaseGenerator):
         def after_case_config(self, case_config: CaseConfig) -> CaseConfig:
-            return configure_case(case_config)
+            return configure_case(case_config, max(int(self.index) - 1, 0))
