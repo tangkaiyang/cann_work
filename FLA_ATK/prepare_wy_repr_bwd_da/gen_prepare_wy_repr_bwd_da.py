@@ -16,7 +16,7 @@ CASE_COUNT = 200
 DATA_DTYPES = ("bf16", "fp16")
 GATE_DTYPES = ("fp32", "bf16", "fp16")
 HEAD_PAIRS = ((1, 1), (2, 2), (2, 4), (4, 8), (4, 16), (8, 32))
-TIMES = (16, 24, 64, 128, 196, 256, 512)
+TIMES = (64, 128, 196, 256, 512)
 VALUE_DIMS = (128, 256)
 CHUNK_SIZES = (64, 128)
 

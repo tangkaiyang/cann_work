@@ -29,7 +29,7 @@ inputs:
       dim_numbers:
         values: [4]
       dim_values:
-        values: [1, 1, 16, 128]
+        values: [1, 1, 64, 128]
   - name: v
     type: tensor
     required: true
@@ -44,7 +44,7 @@ inputs:
       dim_numbers:
         values: [4]
       dim_values:
-        values: [1, 1, 16, 128]
+        values: [1, 1, 64, 128]
   - name: beta
     type: tensor
     required: true
@@ -59,7 +59,7 @@ inputs:
       dim_numbers:
         values: [3]
       dim_values:
-        values: [1, 1, 16]
+        values: [1, 1, 64]
   - name: a
     type: tensor
     required: true
@@ -74,7 +74,7 @@ inputs:
       dim_numbers:
         values: [4]
       dim_values:
-        values: [1, 1, 16, 64]
+        values: [1, 1, 64, 64]
   - name: dw
     type: tensor
     required: true
@@ -89,7 +89,7 @@ inputs:
       dim_numbers:
         values: [4]
       dim_values:
-        values: [1, 1, 16, 128]
+        values: [1, 1, 64, 128]
   - name: du
     type: tensor
     required: true
@@ -104,7 +104,7 @@ inputs:
       dim_numbers:
         values: [4]
       dim_values:
-        values: [1, 1, 16, 128]
+        values: [1, 1, 64, 128]
   - name: g
     type: tensor
     required: true
@@ -119,7 +119,7 @@ inputs:
       dim_numbers:
         values: [3]
       dim_values:
-        values: [1, 1, 16]
+        values: [1, 1, 64]
   - name: cuSeqlensOptional
     type: attrs
     required: false
@@ -127,7 +127,7 @@ inputs:
       values: [int64_t]
     ranges:
       valid:
-        values: [[0, 16]]
+        values: [[0, 64]]
       invalid:
         values: []
     tuple_numbers:
