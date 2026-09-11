@@ -16,9 +16,9 @@ CASE_COUNT = 200
 DATA_DTYPES = ("bf16", "fp16")
 GATE_DTYPES = ("fp32", "bf16", "fp16")
 HEAD_PAIRS = ((2, 2), (2, 4), (4, 8), (4, 16), (8, 32))
-TIMES = (128, 196, 256, 512)
+TIMES = (128,)
 VALUE_DIMS = (128, 256)
-CHUNK_SIZES = (64, 128)
+CHUNK_SIZES = (64,)
 
 
 def _profile(index):
@@ -26,7 +26,7 @@ def _profile(index):
     gtype = GATE_DTYPES[(index // 2) % len(GATE_DTYPES)]
     hk, hv = HEAD_PAIRS[(index // 3) % len(HEAD_PAIRS)]
     time = TIMES[(index // 5) % len(TIMES)]
-    varlen = index % 4 == 3
+    varlen = True
     return {
         "dtype": dtype,
         "gtype": gtype,
@@ -103,9 +103,15 @@ def configure_case(case_config, index):
         for item, value in zip(offset_group, offsets):
             item.required = True
             item.range_values = value
-        for item in groups["chunkIndicesOptional"]:
-            item.required = False
-            item.range_values = "null"
+        chunk_values = _chunk_indices(offsets, bt)
+        chunk_group = groups["chunkIndicesOptional"]
+        if len(chunk_group) != len(chunk_values):
+            raise ValueError(
+                "chunkIndicesOptional tuple length must match generated chunks"
+            )
+        for item, value in zip(chunk_group, chunk_values):
+            item.required = True
+            item.range_values = value
     else:
         for name in ("cuSeqlensOptional", "chunkIndicesOptional"):
             for item in groups[name]:

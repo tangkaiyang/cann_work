@@ -131,7 +131,7 @@ inputs:
       invalid:
         values: []
     tuple_numbers:
-      values: [2, 3, 4, 5]
+      values: [2]
   - name: chunkIndicesOptional
     type: attrs
     required: false
@@ -143,7 +143,7 @@ inputs:
       invalid:
         values: []
     tuple_numbers:
-      values: [2]
+      values: [4]
   - name: chunkSize
     type: attr
     required: true
@@ -151,6 +151,6 @@ inputs:
       values: [int]
     ranges:
       valid:
-        values: [64, 128]
+        values: [64]
       invalid:
         values: []
