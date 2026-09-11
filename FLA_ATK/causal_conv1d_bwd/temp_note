@@ -15,3 +15,16 @@ Check NnopbaseRunForWorkspace(*executor, workspaceSize) failed
 
 https://gitcode.com/chen-linxin4/work_tool/tree/atk-test/FLA_ATK/causal_conv1d_bwd
 https://github.com/flashserve/flash-linear-attention-npu
+
+  - name: dim
+    type: attr_tuple
+    required: true
+    dtypes:
+      values: [ int]
+    tuple_numbers:
+      values: [ 8 ]
+    ranges:
+      valid:
+        values: [ 1, 2, 3, 4, 5, 6, 7]
+      invalid:
+        values: [ ]
