@@ -1,135 +1,230 @@
 api: pytorch
 api_type: executor_causal_conv1d_bwd
-aclnn_api_type: aclnn_causal_conv1d_bwd
 version: v2.1
-name: aclnn.causal_conv1d_bwd
-aclnn_name: CausalConv1dBwd
+name: causal_conv1d_bwd
+aclnn_name: ""
 generate: generator_causal_conv1d_bwd
-dtype_numbers: 50
+dtype_numbers: 100
 extra_numbers: 0
 standard:
-  acc: causal_conv1d_bwd_allclose
+  acc:
+    cv_fused_double_benchmark:
+      max_re_ratio: 5
+      avg_abs_ratio: 1.5
+      root_mean_square_ratio: 1.5
   perf: not_key
 inputs:
+  - name: low_precision_marker
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, fp16]
+    ranges:
+      valid:
+        values: [[0, 0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: fp32_marker
+    type: tensor
+    required: true
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0, 0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
   - name: x
     type: tensor
     required: true
     dtypes:
-      values: [bf16, fp16, fp32]
+      values: [bf16]
     ranges:
       valid:
-        values: [[-2, 2]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [2, 3]
+        values: [1]
       dim_values:
-        values: [[1, 8], [64, 32768], [16, 1536]]
-  - name: yOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [bf16, fp16, fp32]
-    ranges:
-      valid:
-        values: [[-2, 2]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [2, 3, 4]
-      dim_values:
-        values: [[1, 8], [64, 32768], [16, 1536]]
+        values: [1]
   - name: weight
     type: tensor
     required: true
     dtypes:
-      values: [bf16, fp16, fp32]
+      values: [bf16]
     ranges:
       valid:
-        values: [[-2, 2]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [2]
+        values: [1]
       dim_values:
-        values: [[2, 4], [16, 1536]]
+        values: [1]
   - name: dy
     type: tensor
     required: true
     dtypes:
-      values: [bf16, fp16, fp32]
+      values: [bf16]
     ranges:
       valid:
-        values: [[-2, 2]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [2, 3, 4]
+        values: [1]
       dim_values:
-        values: [[1, 8], [64, 32768], [16, 1536]]
-  - name: initialStateOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [bf16, fp16, fp32]
-    ranges:
-      valid:
-        values: [[-2, 2]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [3]
-      dim_values:
-        values: [[1, 8], [2, 4], [16, 1536]]
-  - name: dhtOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [bf16, fp16, fp32]
-    ranges:
-      valid:
-        values: [[-2, 2]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [3]
-      dim_values:
-        values: [[1, 8], [2, 4], [16, 1536]]
-  - name: queryStartLocOptional
-    type: attr_tuple
-    required: true
-    dtypes:
-      values: [int]
-    tuple_numbers:
-      values: [2]
-    ranges:
-      valid:
-        values: [0, 32768]
-      invalid:
-        values: []
-  - name: activation
+        values: [1]
+  - name: case_spec
     type: attr
     required: true
     dtypes:
-      values: [int]
+      values: [non_param]
     ranges:
       valid:
-        values: [0, 1, 2]
+        values: ["{\"name\":\"bf16_bsnd_B1_T16_D16_W4\",\"dtype\":\"bf16\",\"B\":1,\"T\":16,\"D\":16,\"W\":4,\"op\":\"causal_conv1d_bwd\",\"case_id\":0,\"seed\":20260817,\"route\":\"ascendc\",\"soc\":\"ascend910b\"}"]
       invalid:
         values: []
-  - name: inputLayoutOptional
+  - name: dtype
     type: attr
-    required: false
+    required: true
     dtypes:
       values: [string]
     ranges:
       valid:
-        values: [BSND, BSH, TND, BNSD, NTD]
+        values: ["bf16", "fp16"]
+      invalid:
+        values: []
+  - name: B
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [1, 2, 4, 8]
+      invalid:
+        values: []
+  - name: T
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [16, 32, 64, 128, 256]
+      invalid:
+        values: []
+  - name: D
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [16, 32, 64, 128, 256]
+      invalid:
+        values: []
+  - name: W
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [2, 3, 4]
+      invalid:
+        values: []
+  - name: case_id
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: []
+  - name: seed
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [20260817]
+      invalid:
+        values: []
+  - name: soc
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: ["ascend910b", "ascend910_93", "ascend950"]
+      invalid:
+        values: []
+  - name: route
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: ["ascendc"]
       invalid:
         values: []

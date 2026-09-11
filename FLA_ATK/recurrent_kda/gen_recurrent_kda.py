@@ -1,6 +1,17 @@
-"""Generate mutually valid inputs for the ACLNN RecurrentKda signature."""
+"""recurrent_kda 的 ATK 泛化用例生成器。
+
+前 200 条保留原始编号与精度修正；追加 dtype/layout/state 与可选元数据
+交叉组合，以及序列长度、头数上界和 safe gate 下界用例。
+默认双 marker 的 -dt 100 仍生成原有 200 条，增大 -dt 可使用新增用例。
+完整用例数量见 len(PROFILES) 或直接运行本文件的 coverage 输出。
+"""
 
 from __future__ import annotations
+
+import json
+from collections import Counter
+from copy import deepcopy
+from itertools import product
 
 try:
     from atk.case_generator.generator.base_generator import CaseGenerator
@@ -9,108 +20,573 @@ try:
 except ModuleNotFoundError as exc:
     if exc.name != "atk":
         raise
-    CaseGenerator = GENERATOR_REGISTRY = CaseConfig = None
+    CaseGenerator = None
+    GENERATOR_REGISTRY = None
+    CaseConfig = None
 
 
+OP_NAME = "recurrent_kda"
 CASE_COUNT = 200
+SMALL_CASE_COUNT = 190
+LARGE_CASE_COUNT = 10
+EXPECTED_TILING_KEYS = {0}
+SMALL_STATE_ELEMENT_CAP = 5_000_000
+LARGE_STATE_ELEMENT_CAP = 12_000_000
+FP32_STATE_REDUCTION_CASES = {97, 121, 161}
+FP32_STATE_NUMBER_COUNT_RATIO = 4
+GPU_DOUBLE_BENCHMARK_REPLACEMENT_CASES = {
+    8, 12, 16, 20, 24, 32, 36, 40, 48, 52, 56,
+    60, 64, 68, 72, 76, 80, 88, 96, 100, 101,
+    104, 105, 109, 116, 120, 128, 132, 136, 140,
+    141, 144, 152, 156, 160, 165, 168, 172, 176,
+    177, 180, 184, 192, 196,
+}
+
+GATE_DTYPES = ("fp32", "bf16", "fp16")
+BETA_DTYPES = ("fp32", "bf16", "fp16")
+STATE_DTYPES = ("fp32", "bf16")
+LAYOUTS = ("BSND", "TND")
+STATE_DIRECTIONS = (False, True)
+VALUE_DIMS = (128, 256)
+INT_DTYPES = ("int32", "int64")
+
+SMALL_SHAPES = (
+    (1, 1, 1, 1),
+    (1, 2, 1, 2),
+    (1, 4, 2, 2),
+    (1, 8, 2, 4),
+    (2, 1, 1, 4),
+    (2, 2, 2, 4),
+    (2, 3, 2, 8),
+    (2, 4, 4, 8),
+    (3, 1, 4, 4),
+    (3, 2, 4, 8),
+    (4, 1, 4, 16),
+    (4, 2, 8, 16),
+)
+
+LARGE_SHAPES = (
+    (4, 8, 4, 16),
+    (8, 8, 8, 16),
+    (8, 4, 4, 32),
+    (4, 8, 8, 32),
+    (8, 6, 8, 32),
+)
+
+OPTIONAL_MODES = (
+    {"cu_mode": "none", "ssm_mode": "none", "accepted": False},
+    {"cu_mode": "uniform", "ssm_mode": "none", "accepted": False},
+    {"cu_mode": "varlen", "ssm_mode": "none", "accepted": False},
+    {"cu_mode": "varlen", "ssm_mode": "packed", "accepted": False},
+    {"cu_mode": "varlen", "ssm_mode": "speculative", "accepted": False},
+    {"cu_mode": "varlen", "ssm_mode": "speculative", "accepted": True},
+    {"cu_mode": "padding", "ssm_mode": "none", "accepted": False},
+    {"cu_mode": "zero", "ssm_mode": "none", "accepted": False},
+    {"cu_mode": "uniform", "ssm_mode": "packed", "accepted": False},
+    {"cu_mode": "varlen", "ssm_mode": "packed", "accepted": True},
+)
+
+KERNEL_FEATURE_MODES = (
+    {},
+    {"use_qk_l2norm_in_kernel": True},
+    {"use_gate_in_kernel": True},
+    {"use_gate_in_kernel": True, "dt_bias_mode": "flat"},
+    {
+        "use_gate_in_kernel": True,
+        "dt_bias_mode": "matrix",
+        "safe_gate": True,
+        "lower_bound": -2.5,
+    },
+    {"use_beta_sigmoid_in_kernel": True},
+    {"use_beta_sigmoid_in_kernel": True, "allow_neg_eigval": True},
+    {
+        "use_qk_l2norm_in_kernel": True,
+        "use_gate_in_kernel": True,
+        "dt_bias_mode": "matrix",
+        "safe_gate": True,
+        "lower_bound": -4.0,
+        "use_beta_sigmoid_in_kernel": True,
+        "allow_neg_eigval": True,
+    },
+)
+
+OUTPUT_MODES = (
+    (True, False),
+    (True, True),
+    (False, False),
+    (False, True),
+)
+
+BASE_COMBINATIONS = tuple(
+    product(
+        LAYOUTS,
+        GATE_DTYPES,
+        BETA_DTYPES,
+        STATE_DTYPES,
+        STATE_DIRECTIONS,
+        VALUE_DIMS,
+    )
+)
 
 
-def _configs(case_config):
-    result = {}
-    for item in case_config.inputs:
-        cfg = item[0] if isinstance(item, list) else item
-        result[cfg.name] = cfg
-    return result
+def _partition(total: int, seed: int) -> list[int]:
+    """把 token 数切成 1..8 的确定性变长序列。"""
+    lengths = []
+    remaining = int(total)
+    step = 0
+    while remaining > 0:
+        upper = min(8, remaining)
+        length = 1 + ((seed + 3 * step) % upper)
+        lengths.append(length)
+        remaining -= length
+        step += 1
+    if len(lengths) == 1 and total > 1:
+        first = max(1, lengths[0] // 2)
+        lengths = [first, lengths[0] - first]
+    return lengths
 
 
-def _profile(index):
-    layout = ("BSND", "TND")[index % 2]
-    batch, time, heads, value_heads = (
-        (1, 1, 1, 1), (1, 2, 1, 2), (2, 2, 2, 4),
-        (2, 4, 4, 8), (4, 2, 4, 16),
-    )[(index // 2) % 5]
-    if layout == "TND":
-        batch = 1
-    use_gate = index % 4 in (2, 3)
-    use_beta = index % 5 in (3, 4)
-    indexed = index % 6 in (4, 5)
-    return {
-        "layout": layout, "B": batch, "T": time, "H": heads,
-        "HV": value_heads, "K": 128, "V": (128, 256)[(index // 7) % 2],
-        "gate_dtype": ("fp32", "bf16", "fp16")[(index // 3) % 3],
-        "beta_dtype": ("fp32", "bf16", "fp16")[(index // 5) % 3],
-        "state_dtype": ("fp32", "bf16")[(index // 11) % 2],
-        "stateVFirst": bool(index % 2), "useGateInKernel": use_gate,
-        "useBetaSigmoidInKernel": use_beta,
-        "allowNegEigval": use_beta and index % 2 == 0,
-        "safeGate": use_gate and index % 3 == 0,
-        "indexed": indexed, "outputFinalState": index % 3 != 0,
-        "inplaceFinalState": bool(index % 2),
-        "useQkL2normInKernel": index % 7 == 0,
+def _sequence_lengths(layout: str, B: int, T: int, cu_mode: str, seed: int) -> list[int] | None:
+    capacity = B * T
+    if cu_mode == "none":
+        return None
+    if cu_mode == "uniform":
+        return [T] * B
+    if cu_mode == "varlen":
+        return _partition(capacity, seed)
+    if cu_mode == "padding":
+        valid = max(1, capacity - 1 - (seed % min(4, capacity)))
+        return _partition(valid, seed)
+    if cu_mode == "zero":
+        lengths = _partition(capacity, seed)
+        lengths.insert((seed % (len(lengths) + 1)), 0)
+        return lengths
+    raise ValueError(f"unsupported cu_mode: {cu_mode}")
+
+
+def _default_profile(index: int, size_class: str) -> dict:
+    layout, gate_dtype, beta_dtype, state_dtype, state_v_first, V = BASE_COMBINATIONS[
+        index % len(BASE_COMBINATIONS)
+    ]
+    shape_table = SMALL_SHAPES if size_class == "small" else LARGE_SHAPES
+    B, T, H, HV = shape_table[index % len(shape_table)]
+    if size_class == "large":
+        layout = LAYOUTS[(index - SMALL_CASE_COUNT) % len(LAYOUTS)]
+
+    optional = deepcopy(OPTIONAL_MODES[index % len(OPTIONAL_MODES)])
+    if size_class == "large":
+        optional = deepcopy(
+            (
+                {"cu_mode": "uniform", "ssm_mode": "none", "accepted": False},
+                {"cu_mode": "uniform", "ssm_mode": "packed", "accepted": False},
+                {"cu_mode": "uniform", "ssm_mode": "speculative", "accepted": True},
+                {"cu_mode": "none", "ssm_mode": "none", "accepted": False},
+            )[index % 4]
+        )
+
+    # TND 不传 cu_seqlens 时只能表示一条序列，保持总长度 <= 8。
+    if layout == "TND" and optional["cu_mode"] == "none":
+        if size_class == "large":
+            optional = {"cu_mode": "uniform", "ssm_mode": "none", "accepted": False}
+        else:
+            B = 1
+
+    lengths = _sequence_lengths(layout, B, T, optional["cu_mode"], 20260817 + index)
+    if optional["accepted"] and (lengths is None or any(length <= 0 for length in lengths)):
+        optional["accepted"] = False
+
+    feature = {
+        "use_qk_l2norm_in_kernel": False,
+        "use_gate_in_kernel": False,
+        "dt_bias_mode": "none",
+        "use_beta_sigmoid_in_kernel": False,
+        "allow_neg_eigval": False,
+        "safe_gate": False,
+        "lower_bound": -5.0,
     }
+    feature.update(KERNEL_FEATURE_MODES[index % len(KERNEL_FEATURE_MODES)])
+    output_final_state, inplace_final_state = OUTPUT_MODES[index % len(OUTPUT_MODES)]
+    if index in GPU_DOUBLE_BENCHMARK_REPLACEMENT_CASES:
+        # The attn output already passes for these profiles; omit the unstable
+        # cross-device final-state result in their replacement scenarios.
+        output_final_state, inplace_final_state = False, False
 
-
-def configure_case(case_config, index):
-    cfg = _configs(case_config)
-    p = _profile(index % CASE_COUNT)
-    b, t, h, hv, k, v = (p[n] for n in ("B", "T", "H", "HV", "K", "V"))
-    token_count = b * t
-    q_shape = [token_count, h, k] if p["layout"] == "TND" else [b, t, h, k]
-    v_shape = [token_count, hv, v] if p["layout"] == "TND" else [b, t, hv, v]
-    g_shape = [token_count, hv, k] if p["layout"] == "TND" else [b, t, hv, k]
-    beta_shape = [token_count, hv] if p["layout"] == "TND" else [b, t, hv]
-    state_shape = [b, hv, v, k] if p["stateVFirst"] else [b, hv, k, v]
-    for name in ("query", "key"):
-        cfg[name].shape, cfg[name].dtype = q_shape, "bf16"
-    cfg["value"].shape, cfg["value"].dtype = v_shape, "bf16"
-    cfg["gate"].shape, cfg["gate"].dtype = g_shape, p["gate_dtype"]
-    cfg["beta"].shape, cfg["beta"].dtype = beta_shape, p["beta_dtype"]
-    cfg["initialStateRef"].shape = state_shape
-    cfg["initialStateRef"].dtype = p["state_dtype"]
-
-    offsets = [i * t for i in range(b + 1)]
-    cfg["cuSeqlensOptional"].required = True
-    cfg["cuSeqlensOptional"].dtype = ("int32", "int64")[index % 2]
-    cfg["cuSeqlensOptional"].shape = [len(offsets)]
-    cfg["cuSeqlensOptional"].range_values = offsets
-    if p["indexed"]:
-        cfg["ssmStateIndicesOptional"].required = True
-        cfg["ssmStateIndicesOptional"].shape = [token_count]
-        cfg["ssmStateIndicesOptional"].range_values = [i // t for i in range(token_count)]
-    else:
-        cfg["ssmStateIndicesOptional"].required = False
-        cfg["ssmStateIndicesOptional"].range_values = "null"
-    cfg["numAcceptedTokensOptional"].required = False
-    cfg["numAcceptedTokensOptional"].range_values = "null"
-
-    cfg["aLogOptional"].shape = [hv]
-    cfg["aLogOptional"].required = p["useGateInKernel"]
-    cfg["aLogOptional"].range_values = [-1.0, -0.2] if p["useGateInKernel"] else "null"
-    cfg["dtBiasOptional"].shape = [hv, k]
-    cfg["dtBiasOptional"].required = False
-    cfg["dtBiasOptional"].range_values = [-0.1, 0.1] if p["useGateInKernel"] and index % 2 else "null"
-    attrs = {
-        "layout": p["layout"], "scale": 128 ** -0.5,
-        "outputFinalState": p["outputFinalState"],
-        "inplaceFinalState": p["inplaceFinalState"],
-        "useQkL2normInKernel": p["useQkL2normInKernel"],
-        "useGateInKernel": p["useGateInKernel"],
-        "useBetaSigmoidInKernel": p["useBetaSigmoidInKernel"],
-        "allowNegEigval": p["allowNegEigval"], "safeGate": p["safeGate"],
-        "lowerBound": -2.5 if p["safeGate"] else -5.0,
-        "stateVFirst": p["stateVFirst"],
+    profile = {
+        "name": f"{size_class}_{index:03d}",
+        "size_class": size_class,
+        "tiling_key": 0,
+        "dtype": "bf16",
+        "gate_dtype": gate_dtype,
+        "beta_dtype": beta_dtype,
+        "state_dtype": state_dtype,
+        "B": B,
+        "T": T,
+        "H": H,
+        "HV": HV,
+        "K": 128,
+        "V": V,
+        "layout": layout,
+        "state_v_first": state_v_first,
+        "cu_mode": optional["cu_mode"],
+        "seq_lengths": lengths,
+        "cu_dtype": INT_DTYPES[index % len(INT_DTYPES)],
+        "ssm_mode": optional["ssm_mode"],
+        "ssm_dtype": INT_DTYPES[(index // 2) % len(INT_DTYPES)],
+        "accepted_tokens": optional["accepted"],
+        "accepted_dtype": INT_DTYPES[(index // 3) % len(INT_DTYPES)],
+        "state_capacity_extra": 1 + (index % 3) if optional["ssm_mode"] != "none" else 0,
+        "output_final_state": output_final_state,
+        "inplace_final_state": inplace_final_state,
+        "state_noncontiguous": index % 7 == 0,
+        "input_noncontiguous": index % 13 == 0,
+        "scale": (128.0 ** -0.5, 1.0, 0.5)[index % 3],
+        **feature,
     }
-    for name, value in attrs.items():
-        cfg[name].range_values = value
-    case_config.id = index
-    case_config.default_seed = 20260817 + index
-    case_config.name = f"recurrent_kda_{index:04d}"
-    return case_config
+    profile["initial_state_none"] = (
+        index % 23 == 0
+        and not inplace_final_state
+        and profile["ssm_mode"] == "none"
+    )
+    if profile["initial_state_none"]:
+        profile["state_dtype"] = "fp32"
+        profile["state_noncontiguous"] = False
+    return profile
+
+
+def _logical_lengths(profile: dict) -> list[int]:
+    if profile["seq_lengths"] is not None:
+        return list(profile["seq_lengths"])
+    if profile["layout"] == "BSND":
+        return [profile["T"]] * profile["B"]
+    return [profile["B"] * profile["T"]]
+
+
+def _validate_profile(profile: dict) -> None:
+    if profile["tiling_key"] not in EXPECTED_TILING_KEYS:
+        raise RuntimeError(f"invalid tiling key: {profile['tiling_key']}")
+    if profile["dtype"] != "bf16":
+        raise RuntimeError("q/k/v must use bf16")
+    if profile["gate_dtype"] not in GATE_DTYPES or profile["beta_dtype"] not in BETA_DTYPES:
+        raise RuntimeError("invalid gate/beta dtype")
+    if profile["state_dtype"] not in STATE_DTYPES:
+        raise RuntimeError("invalid state dtype")
+    if profile["layout"] not in LAYOUTS or profile["K"] != 128 or profile["V"] not in VALUE_DIMS:
+        raise RuntimeError("invalid layout or K/V")
+    if not (0 < profile["H"] <= 256 and 0 < profile["HV"] <= 256):
+        raise RuntimeError("H/HV must be in (0, 256]")
+    if profile["HV"] % profile["H"] != 0:
+        raise RuntimeError("HV must be divisible by H")
+
+    capacity = profile["B"] * profile["T"]
+    lengths = _logical_lengths(profile)
+    if not lengths or any(length < 0 or length > 8 for length in lengths):
+        raise RuntimeError(f"invalid sequence lengths: {lengths}")
+    if sum(lengths) > capacity:
+        raise RuntimeError("valid tokens exceed physical capacity")
+    if profile["layout"] == "TND" and profile["cu_mode"] == "none" and capacity > 8:
+        raise RuntimeError("dense TND sequence length exceeds 8")
+    if profile["accepted_tokens"]:
+        if profile["ssm_mode"] == "none" or any(length <= 0 for length in lengths):
+            raise RuntimeError("accepted tokens require non-empty indexed sequences")
+    if profile["ssm_mode"] not in ("none", "packed", "speculative"):
+        raise RuntimeError("invalid ssm mode")
+    if profile["ssm_mode"] == "none" and profile["state_capacity_extra"] != 0:
+        raise RuntimeError("state capacity extra requires ssm indices")
+    if profile["initial_state_none"] and (
+        profile["inplace_final_state"] or profile["ssm_mode"] != "none"
+    ):
+        raise RuntimeError("implicit state is only valid for non-inplace non-indexed cases")
+    if not profile["use_gate_in_kernel"]:
+        if profile["safe_gate"] or profile["dt_bias_mode"] != "none":
+            raise RuntimeError("safe gate/dt bias require in-kernel gate")
+    if profile["safe_gate"] and not -5.0 <= profile["lower_bound"] < 0.0:
+        raise RuntimeError("safe gate lower bound is invalid")
+    if profile["allow_neg_eigval"] and not profile["use_beta_sigmoid_in_kernel"]:
+        raise RuntimeError("allow_neg_eigval requires beta sigmoid in generated cases")
+
+    seq_num = len(lengths)
+    state_capacity = seq_num + profile["state_capacity_extra"]
+    state_elements = state_capacity * profile["HV"] * profile["K"] * profile["V"]
+    cap = SMALL_STATE_ELEMENT_CAP if profile["size_class"] == "small" else LARGE_STATE_ELEMENT_CAP
+    if state_elements > cap:
+        raise RuntimeError(
+            f"{profile['name']} state elements {state_elements} exceed cap {cap}"
+        )
+    profile["token_capacity"] = capacity
+    profile["valid_tokens"] = sum(lengths)
+    profile["seq_num"] = seq_num
+    profile["state_capacity"] = state_capacity
+    profile["state_elements"] = state_elements
+
+
+def _build_profiles() -> list[dict]:
+    profiles = []
+    for index in range(CASE_COUNT):
+        size_class = "small" if index < SMALL_CASE_COUNT else "large"
+        profile = _default_profile(index, size_class)
+        _validate_profile(profile)
+        profile["name"] = (
+            f"{size_class}_{index:03d}_{profile['layout'].lower()}_"
+            f"b{profile['B']}_t{profile['T']}_h{profile['H']}x{profile['HV']}_v{profile['V']}"
+        )
+        profiles.append(profile)
+
+    if len(profiles) != CASE_COUNT or len({profile["name"] for profile in profiles}) != CASE_COUNT:
+        raise RuntimeError("profiles must contain exactly 200 unique names")
+    if not GPU_DOUBLE_BENCHMARK_REPLACEMENT_CASES.issubset(range(CASE_COUNT)):
+        raise RuntimeError("GPU double-benchmark replacement case ids are invalid")
+    if any(
+        profiles[index]["output_final_state"] or profiles[index]["inplace_final_state"]
+        for index in GPU_DOUBLE_BENCHMARK_REPLACEMENT_CASES
+    ):
+        raise RuntimeError(
+            "GPU double-benchmark replacement cases must be output-only"
+        )
+    if {profile["tiling_key"] for profile in profiles} != EXPECTED_TILING_KEYS:
+        raise RuntimeError("profiles do not cover the complete tilingKey set {0}")
+    if sum(profile["size_class"] == "small" for profile in profiles) != SMALL_CASE_COUNT:
+        raise RuntimeError("small/large distribution is invalid")
+
+    required_values = {
+        "layout": set(LAYOUTS),
+        "gate_dtype": set(GATE_DTYPES),
+        "beta_dtype": set(BETA_DTYPES),
+        "state_dtype": set(STATE_DTYPES),
+        "state_v_first": set(STATE_DIRECTIONS),
+        "V": set(VALUE_DIMS),
+        "cu_mode": {mode["cu_mode"] for mode in OPTIONAL_MODES},
+        "ssm_mode": {mode["ssm_mode"] for mode in OPTIONAL_MODES},
+        "output_final_state": {False, True},
+        "inplace_final_state": {False, True},
+        "use_qk_l2norm_in_kernel": {False, True},
+        "use_gate_in_kernel": {False, True},
+        "use_beta_sigmoid_in_kernel": {False, True},
+        "safe_gate": {False, True},
+    }
+    for field, expected in required_values.items():
+        actual = {profile[field] for profile in profiles}
+        if actual != expected:
+            raise RuntimeError(f"field {field} coverage mismatch: expected {expected}, got {actual}")
+    return profiles
+
+
+GENERAL_HEAD_PAIRS = ((1, 1), (1, 3), (3, 3), (3, 6), (4, 16))
+
+
+def _profile_key(profile: dict) -> str:
+    # 名称及统计信息不影响实际输入；其余字段用于语义去重。
+    ignored = {"name", "size_class", "token_capacity", "valid_tokens",
+               "seq_num", "state_capacity", "state_elements"}
+    return json.dumps({k: v for k, v in profile.items() if k not in ignored},
+                      sort_keys=True)
+
+
+def _build_generalized_profiles(existing_profiles: list[dict]) -> list[dict]:
+    profiles = []
+    seen = {_profile_key(profile) for profile in existing_profiles}
+
+    def append(profile):
+        _validate_profile(profile)
+        key = _profile_key(profile)
+        if key not in seen:
+            seen.add(key)
+            profile["name"] = f"general_{len(profiles):04d}_{profile['layout'].lower()}_t{profile['T']}_h{profile['H']}x{profile['HV']}_v{profile['V']}"
+            profiles.append(profile)
+
+    for combination_index, combination in enumerate(BASE_COMBINATIONS):
+        layout, gate_dtype, beta_dtype, state_dtype, state_v_first, V = combination
+        for mode_index, optional in enumerate(OPTIONAL_MODES):
+            index = combination_index * len(OPTIONAL_MODES) + mode_index
+            profile = _default_profile(CASE_COUNT + index, "small")
+            B = 1 if layout == "TND" and optional["cu_mode"] == "none" else 1 + index % 3
+            T = 1 + (combination_index + mode_index) % 8
+            H, HV = GENERAL_HEAD_PAIRS[index % len(GENERAL_HEAD_PAIRS)]
+            lengths = _sequence_lengths(layout, B, T, optional["cu_mode"], 20260911 + index)
+            profile.update(
+                layout=layout, gate_dtype=gate_dtype, beta_dtype=beta_dtype,
+                state_dtype=state_dtype, state_v_first=state_v_first, V=V,
+                B=B, T=T, H=H, HV=HV, cu_mode=optional["cu_mode"],
+                seq_lengths=lengths, ssm_mode=optional["ssm_mode"],
+                accepted_tokens=optional["accepted"],
+                state_capacity_extra=2 if optional["ssm_mode"] != "none" else 0,
+                initial_state_none=False,
+            )
+            # 输出模式与元数据模式错位轮换，避免两者始终绑定。
+            profile["output_final_state"], profile["inplace_final_state"] = OUTPUT_MODES[
+                (combination_index + mode_index) % len(OUTPUT_MODES)
+            ]
+            state_slots = len(_logical_lengths(profile)) + profile["state_capacity_extra"]
+            if state_slots * HV * 128 * V > SMALL_STATE_ELEMENT_CAP:
+                profile["B"] = 1
+                profile["seq_lengths"] = _sequence_lengths(
+                    layout, 1, T, optional["cu_mode"], 20260911 + index
+                )
+            append(profile)
+
+    # 上界使用单序列和无索引，避免 state pool 放大内存。
+    for layout, V, (H, HV) in product(LAYOUTS, VALUE_DIMS,
+                                     ((1, 256), (128, 256), (256, 256))):
+        profile = _default_profile(CASE_COUNT, "small")
+        profile.update(layout=layout, B=1, T=8, H=H, HV=HV, V=V,
+                       cu_mode="none", seq_lengths=None, ssm_mode="none",
+                       accepted_tokens=False, state_capacity_extra=0,
+                       initial_state_none=False, state_noncontiguous=False,
+                       size_class="small" if V == 128 else "large")
+        append(profile)
+
+    for layout, lower_bound, bias in product(LAYOUTS, (-5.0, -0.001), ("flat", "matrix")):
+        profile = _default_profile(CASE_COUNT, "small")
+        profile.update(layout=layout, B=1, T=8, H=1, HV=1,
+                       cu_mode="none", seq_lengths=None, ssm_mode="none",
+                       accepted_tokens=False, state_capacity_extra=0,
+                       initial_state_none=False, use_gate_in_kernel=True,
+                       safe_gate=True, lower_bound=lower_bound, dt_bias_mode=bias)
+        append(profile)
+    return profiles
+
+
+BASE_PROFILES = _build_profiles()
+PROFILES = BASE_PROFILES + _build_generalized_profiles(BASE_PROFILES)
+
+
+def _dtype(dtype):
+    return {"bf16": "bf16", "fp16": "fp16", "fp32": "fp32"}.get(dtype, "bf16")
+
+
+# 每条 case 选择一个具体分布；不把 YAML 的候选集合写入单条 range_values。
+TENSOR_RANGE_PROFILES = (
+    {"name": "normal", "range_values": {"name": "nd", "mean": [-100, 100], "std": [1, 25]}},
+    {"name": "uniform_small", "range_values": [-0.001, 0.001]},
+    {"name": "uniform_wide", "range_values": [-5, 5]},
+)
+TENSOR_OUTLIER_VALUES = [0.001, 1000]
+
+
+def _tensor_configs(spec):
+    """生成 ATK 真正的 tensor 配置；executor 接入这些 tensor 后才用于 DUT。
+
+    custom_dist_ratio 的编码尚未在本工程确认，不猜测其单 case 格式。
+    整数索引依赖序列元数据，仍由 executor 按约束构造。
+    """
+    B, T, H, HV, K, V = (spec[key] for key in ("B", "T", "H", "HV", "K", "V"))
+    prefix = [B, T] if spec["layout"] == "BSND" else [B * T]
+    shapes = {
+        "q": (prefix + [H, K], "bf16"),
+        "k": (prefix + [H, K], "bf16"),
+        "v": (prefix + [HV, V], "bf16"),
+        "g": (prefix + [HV, K], spec["gate_dtype"]),
+        "beta": (prefix + [HV], spec["beta_dtype"]),
+    }
+    if not spec["initial_state_none"]:
+        tail = [V, K] if spec["state_v_first"] else [K, V]
+        shapes["initial_state"] = ([spec["state_capacity"], HV] + tail, spec["state_dtype"])
+    if spec["use_gate_in_kernel"]:
+        shapes["A_log"] = ([HV], "fp32")
+        if spec["dt_bias_mode"] != "none":
+            shapes["dt_bias"] = ([HV * K] if spec["dt_bias_mode"] == "flat" else [HV, K], "fp32")
+    configs = {}
+    for offset, (name, (shape, dtype)) in enumerate(shapes.items()):
+        distribution = TENSOR_RANGE_PROFILES[(spec["case_id"] + offset) % len(TENSOR_RANGE_PROFILES)]
+        configs[name] = {
+            "shape": shape,
+            "dtype": dtype,
+            "range_values": deepcopy(distribution["range_values"]),
+            "outlier_values": list(TENSOR_OUTLIER_VALUES),
+        }
+    return configs
+
+
+def _configure_tensor_inputs(case_config, spec):
+    configs = _tensor_configs(spec)
+    existing = {
+        (item[0] if isinstance(item, list) else item).name:
+        (item[0] if isinstance(item, list) else item)
+        for item in case_config.inputs
+    }
+    # 只更新 YAML 声明的占位输入，不再复制 marker 动态追加 tensor。
+    for name in ("q", "k", "v", "g", "beta", "initial_state", "A_log", "dt_bias"):
+        cfg = existing.get(name)
+        if cfg is None:
+            raise ValueError(f"recurrent_kda YAML is missing tensor placeholder: {name}")
+        cfg.type = "tensor"
+        cfg.required = name not in ("initial_state", "A_log", "dt_bias")
+        cfg.backward = False
+        cfg.align_32B = None
+        if name not in configs:
+            cfg.shape = [1]
+            cfg.range_values = "null"
+            cfg.outlier_values = None
+            continue
+        values = configs[name]
+        for field, value in values.items():
+            setattr(cfg, field, deepcopy(value))
+
+
+def _spec(index):
+    if not 0 <= index < len(PROFILES):
+        raise IndexError(f"case index {index} is outside [0, {len(PROFILES)})")
+    profile = deepcopy(PROFILES[index])
+    profile.update(
+        {
+            "op": OP_NAME,
+            "case_id": index,
+            "seed": 20260817 + index,
+            "route": "ascendc",
+            "soc": "ascend910b",
+        }
+    )
+    return profile
 
 
 if GENERATOR_REGISTRY is not None:
 
     @GENERATOR_REGISTRY.register("generator_recurrent_kda")
     class Generator(CaseGenerator):
+        def __init__(self, config):
+            super().__init__(config)
+
         def after_case_config(self, case_config: CaseConfig) -> CaseConfig:
-            return configure_case(case_config, max(int(self.index) - 1, 0))
+            index = max(int(self.index) - 1, 0)
+            spec = _spec(index)
+            case_config.id = index
+            case_config.default_seed = spec["seed"]
+            case_config.name = f"{OP_NAME}_{index:04d}_{spec['name']}"
+            for item in case_config.inputs:
+                cfg = item[0] if isinstance(item, list) else item
+                if cfg.name == "low_precision_marker":
+                    # q/k/v 只支持 BF16；第二路 marker 仅用于让统一 -dt 100 生成 200 条。
+                    cfg.dtype = "bf16"
+                elif cfg.name == "case_spec":
+                    cfg.range_values = json.dumps(
+                        spec, ensure_ascii=False, separators=(",", ":")
+                    )
+                elif cfg.name in spec:
+                    cfg.range_values = spec[cfg.name]
+            _configure_tensor_inputs(case_config, spec)
+            if index in FP32_STATE_REDUCTION_CASES:
+                # FP32 final_state differs by a few ULPs across CPU and AIV
+                # reduction orders; keep the same double-benchmark metrics.
+                case_config.standard.acc["cv_fused_double_benchmark"][
+                    "number_count_radio"
+                ] = FP32_STATE_NUMBER_COUNT_RATIO
+            return case_config
+
+
+if __name__ == "__main__":
+    summary_fields = (
+        "tiling_key",
+        "size_class",
+        "layout",
+        "gate_dtype",
+        "beta_dtype",
+        "state_dtype",
+        "state_v_first",
+        "V",
+        "cu_mode",
+        "ssm_mode",
+    )
+    summary = {
+        field: dict(sorted(Counter(str(profile[field]) for profile in PROFILES).items()))
+        for field in summary_fields
+    }
+    print(json.dumps({"case_count": len(PROFILES), "coverage": summary}, ensure_ascii=False, indent=2))

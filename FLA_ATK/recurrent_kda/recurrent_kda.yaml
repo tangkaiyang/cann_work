@@ -1,9 +1,8 @@
 api: pytorch
 api_type: executor_recurrent_kda
-aclnn_api_type: aclnn_recurrent_kda
 version: v2.1
 name: recurrent_kda
-aclnn_name: RecurrentKda
+aclnn_name:
 generate: generator_recurrent_kda
 dtype_numbers: 100
 extra_numbers: 0
@@ -11,175 +10,344 @@ standard:
   acc:
     cv_fused_double_benchmark:
       max_re_ratio: 5
-      avg_re_ratio: 1.5
-      root_mean_squared_ratio: 1.5
+      avg_abs_ratio: 1.5
+      root_mean_square_ratio: 1.5
   perf: not_key
 inputs:
-  - name: query
+  - name: low_precision_marker
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, fp16]
+    ranges:
+      valid:
+        values: [[0, 0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: fp32_marker
+    type: tensor
+    required: true
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0, 0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: q
     type: tensor
     required: true
     dtypes:
       values: [bf16]
     ranges:
       valid:
-        values: [[-0.1, 0.1]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [3, 4]
+        values: [1]
       dim_values:
-        values: [1, 2, 1, 128]
-  - name: key
+        values: [1]
+  - name: k
     type: tensor
     required: true
     dtypes:
       values: [bf16]
     ranges:
       valid:
-        values: [[-0.1, 0.1]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [3, 4]
+        values: [1]
       dim_values:
-        values: [1, 2, 1, 128]
-  - name: value
+        values: [1]
+  - name: v
     type: tensor
     required: true
     dtypes:
       values: [bf16]
     ranges:
       valid:
-        values: [[-0.1, 0.1]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [3, 4]
+        values: [1]
       dim_values:
-        values: [1, 2, 1, 128]
-  - name: gate
+        values: [1]
+  - name: g
     type: tensor
     required: true
     dtypes:
-      values: [fp32, bf16, fp16]
+      values: [bf16]
     ranges:
       valid:
-        values: [[-0.1, 0.1]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [3, 4]
+        values: [1]
       dim_values:
-        values: [1, 2, 1, 128]
+        values: [1]
   - name: beta
     type: tensor
     required: true
     dtypes:
-      values: [fp32, bf16, fp16]
+      values: [fp32]
     ranges:
       valid:
-        values: [[0.1, 0.9]]
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
       invalid:
-        values: []
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
     shapes:
       dim_numbers:
-        values: [2, 3]
+        values: [1]
       dim_values:
-        values: [1, 2, 1]
-  - name: initialStateRef
+        values: [1]
+  - name: initial_state
     type: tensor
+    required: false
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+      invalid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: A_log
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+      invalid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: dt_bias
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+      invalid:
+        random_types:
+          - name: nd
+            mean: [-100, 100]
+            std: [1, 25]
+          - name: default
+        values: [[-0.001, 0.001], [-5, 5]]
+        custom_dist_ratio: [[0.1, 0.3, 0.1], [0.4, 0.1]]
+    outlier_values: [0.001, 1000]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [1]
+  - name: case_spec
+    type: attr
     required: true
     dtypes:
-      values: [fp32, bf16]
+      values: [non_param]
     ranges:
       valid:
-        values: [[-0.01, 0.01]]
+        values: ["{\"name\":\"bf16_small\",\"dtype\":\"bf16\",\"B\":2,\"T\":2,\"H\":2,\"HV\":4,\"K\":128,\"V\":128,\"layout\":\"BSND\",\"state_v_first\":true,\"op\":\"recurrent_kda\",\"case_id\":0,\"seed\":20260817,\"route\":\"ascendc\",\"soc\":\"ascend910b\"}"]
       invalid:
         values: []
-    shapes:
-      dim_numbers:
+  - name: dtype
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: ["bf16"]
+      invalid:
+        values: []
+  - name: B
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [2]
+      invalid:
+        values: []
+  - name: T
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [2]
+      invalid:
+        values: []
+  - name: H
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [2]
+      invalid:
+        values: []
+  - name: HV
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
         values: [4]
-      dim_values:
-        values: [1, 1, 128, 128]
-  - name: cuSeqlensOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [int32, int64]
-    ranges:
-      valid:
-        values: [[0, 2]]
       invalid:
         values: []
-    shapes:
-      dim_numbers:
-        values: [1]
-      dim_values:
-        values: [2]
-  - name: ssmStateIndicesOptional
-    type: tensor
-    required: false
+  - name: K
+    type: attr
+    required: true
     dtypes:
-      values: [int32, int64]
+      values: [int]
     ranges:
       valid:
-        values: [[0, 1]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [1, 2]
-      dim_values:
-        values: [2]
-  - name: aLogOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [fp32]
-    ranges:
-      valid:
-        values: [[-1, -0.2]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [1]
-      dim_values:
-        values: [1]
-  - name: dtBiasOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [fp32]
-    ranges:
-      valid:
-        values: [[-0.1, 0.1]]
-      invalid:
-        values: []
-    shapes:
-      dim_numbers:
-        values: [1, 2]
-      dim_values:
         values: [128]
-  - name: numAcceptedTokensOptional
-    type: tensor
-    required: false
-    dtypes:
-      values: [int32, int64]
-    ranges:
-      valid:
-        values: [[1, 8]]
       invalid:
         values: []
-    shapes:
-      dim_numbers:
-        values: [1]
-      dim_values:
-        values: [1]
+  - name: V
+    type: attr
+    required: true
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [128]
+      invalid:
+        values: []
   - name: layout
     type: attr
     required: true
@@ -187,106 +355,56 @@ inputs:
       values: [string]
     ranges:
       valid:
-        values: [BSND, TND]
+        values: ["BSND"]
       invalid:
         values: []
-  - name: scale
-    type: attr
-    required: true
-    dtypes:
-      values: [float]
-    ranges:
-      valid:
-        values: [0.08838834764831845]
-      invalid:
-        values: []
-  - name: outputFinalState
+  - name: state_v_first
     type: attr
     required: true
     dtypes:
       values: [bool]
     ranges:
       valid:
-        values: [false, true]
+        values: [true]
       invalid:
         values: []
-  - name: inplaceFinalState
+  - name: case_id
     type: attr
     required: true
     dtypes:
-      values: [bool]
+      values: [int]
     ranges:
       valid:
-        values: [false, true]
+        values: [0]
       invalid:
         values: []
-  - name: useQkL2normInKernel
+  - name: seed
     type: attr
     required: true
     dtypes:
-      values: [bool]
+      values: [int]
     ranges:
       valid:
-        values: [false, true]
+        values: [20260817]
       invalid:
         values: []
-  - name: useGateInKernel
+  - name: soc
     type: attr
     required: true
     dtypes:
-      values: [bool]
+      values: [string]
     ranges:
       valid:
-        values: [false, true]
+        values: ["ascend910b", "ascend910_93", "ascend950"]
       invalid:
         values: []
-  - name: useBetaSigmoidInKernel
+  - name: route
     type: attr
     required: true
     dtypes:
-      values: [bool]
+      values: [string]
     ranges:
       valid:
-        values: [false, true]
-      invalid:
-        values: []
-  - name: allowNegEigval
-    type: attr
-    required: true
-    dtypes:
-      values: [bool]
-    ranges:
-      valid:
-        values: [false, true]
-      invalid:
-        values: []
-  - name: safeGate
-    type: attr
-    required: true
-    dtypes:
-      values: [bool]
-    ranges:
-      valid:
-        values: [false, true]
-      invalid:
-        values: []
-  - name: lowerBound
-    type: attr
-    required: true
-    dtypes:
-      values: [float]
-    ranges:
-      valid:
-        values: [-5.0, -2.5]
-      invalid:
-        values: []
-  - name: stateVFirst
-    type: attr
-    required: true
-    dtypes:
-      values: [bool]
-    ranges:
-      valid:
-        values: [false, true]
+        values: ["ascendc"]
       invalid:
         values: []
