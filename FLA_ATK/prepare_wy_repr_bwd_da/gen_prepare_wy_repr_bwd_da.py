@@ -91,32 +91,21 @@ def configure_case(case_config, index):
     cfg["beta"].dtype = "fp32"
     cfg["g"].dtype = p["gtype"]
     cfg["chunkSize"].range_values = bt
-    groups = {
-        (item[0] if isinstance(item, list) else item).name:
-            (item if isinstance(item, list) else [item])
-        for item in case_config.inputs
-    }
     if p["varlen"]:
-        offset_group = groups["cuSeqlensOptional"]
-        count = len(offset_group)
-        offsets = [round(position * t / (count - 1)) for position in range(count)]
-        for item, value in zip(offset_group, offsets):
-            item.required = True
-            item.range_values = value
+        offsets = [0, t]
+        cfg["cuSeqlensOptional"].required = True
+        cfg["cuSeqlensOptional"].range_values = offsets
         chunk_values = _chunk_indices(offsets, bt)
-        chunk_group = groups["chunkIndicesOptional"]
-        if len(chunk_group) != len(chunk_values):
+        if len(chunk_values) != 4:
             raise ValueError(
                 "chunkIndicesOptional tuple length must match generated chunks"
             )
-        for item, value in zip(chunk_group, chunk_values):
-            item.required = True
-            item.range_values = value
+        cfg["chunkIndicesOptional"].required = True
+        cfg["chunkIndicesOptional"].range_values = chunk_values
     else:
         for name in ("cuSeqlensOptional", "chunkIndicesOptional"):
-            for item in groups[name]:
-                item.required = False
-                item.range_values = "null"
+            cfg[name].required = False
+            cfg[name].range_values = "null"
     case_config.id = index
     case_config.default_seed = 20260817 + index
     case_config.name = f"prepare_wy_repr_bwd_da_{index:04d}"

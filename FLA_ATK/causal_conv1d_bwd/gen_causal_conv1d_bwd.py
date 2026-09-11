@@ -93,16 +93,11 @@ def configure_case(case_config):
         cfg[name].shape = state_shape
 
     cfg["yOptional"].required = activation != 0
-    query_group = next(
-        item for item in case_config.inputs
-        if (item[0] if isinstance(item, list) else item).name
-        == "queryStartLocOptional"
-    )
-    query_group = query_group if isinstance(query_group, list) else [query_group]
     query_values = [0, time]
-    for index, item in enumerate(query_group):
-        item.required = varlen
-        item.range_values = query_values[index] if varlen else "null"
+    cfg["queryStartLocOptional"].required = varlen
+    cfg["queryStartLocOptional"].range_values = (
+        query_values if varlen else "null"
+    )
     return case_config
 
 
