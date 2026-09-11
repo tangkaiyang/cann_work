@@ -95,7 +95,6 @@ def configure_case(case_config):
     cfg["yOptional"].required = activation != 0
     cfg["queryStartLocOptional"].required = varlen
     cfg["queryStartLocOptional"].range_values = [0, time] if varlen else "null"
-    cfg["queryStartLocOptional"].tuple_numbers = 2
     return case_config
 
 
