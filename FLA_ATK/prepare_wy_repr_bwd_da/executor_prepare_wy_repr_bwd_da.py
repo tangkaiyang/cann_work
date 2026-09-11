@@ -43,7 +43,12 @@ def _finite_tuple(outputs) -> Tuple[torch.Tensor, ...]:
 
 
 def _optional(value):
-    return None if value is None or (isinstance(value, str) and value == "null") else value
+    if value is None or (isinstance(value, str) and value == "null"):
+        return None
+    if isinstance(value, (list, tuple)):
+        visible = [item for item in value if item is not None and item != "null"]
+        return visible or None
+    return value
 
 
 def _configure_cuda_control(device: torch.device) -> None:

@@ -164,9 +164,6 @@ def _layout_meta(tensor, input_layout):
 
 
 def _query_start_loc_for_layout(input_data, input_layout):
-    supplied = _optional_input(input_data.kwargs.get("queryStartLocOptional"))
-    if supplied is not None:
-        return supplied
     if input_layout not in ("TND", "NTD"):
         return None
     x = input_data.kwargs["x"]
