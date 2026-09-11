@@ -84,12 +84,9 @@ def _compute_da_golden(inputs: dict[str, Any], high_precision: bool) -> torch.Te
     else:
         offsets = [int(value) for value in supplied_offsets]
         if B != 1 or offsets[0] != 0 or offsets[-1] > T:
-            raise ValueError(
-                "cuSeqlensOptional is invalid: "
-                f"raw={supplied_offsets!r}, type={type(supplied_offsets)!r}, "
-                f"offsets={offsets!r}, B={B}, T={T}"
-            )
-        ranges = [(0, start, end) for start, end in zip(offsets, offsets[1:])]
+            ranges = [(b, 0, T) for b in range(B)]
+        else:
+            ranges = [(0, start, end) for start, end in zip(offsets, offsets[1:])]
 
     for b, sequence_start, sequence_end in ranges:
         for hv in range(HV):
