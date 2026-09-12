@@ -1,6 +1,4 @@
-"""recurrent_kda 的 ATK 泛化用例生成器（目标 executor 适配版）。
-
-_spec 将配置转换为本目录 executor 所需的显式序列/索引字段及固定功能。
+"""recurrent_kda 的 ATK 泛化用例生成器。
 
 前 200 条保留原始编号与精度修正；追加 dtype/layout/state 与可选元数据
 交叉组合，以及序列长度、头数上界和 safe gate 下界用例。
@@ -532,7 +530,7 @@ def _ensure_case_metadata(case_config, spec):
     if template is None:
         raise ValueError("recurrent_kda YAML requires an attr placeholder, e.g. layout")
     for name, dtype, value in (
-        ("case_spec", "string", json.dumps(spec, ensure_ascii=False, separators=(",", ":"))),
+        ("case_spec", "non_param", json.dumps(spec, ensure_ascii=False, separators=(",", ":"))),
         ("case_id", "int", spec["case_id"]),
         ("seed", "int", spec["seed"]),
     ):
@@ -550,51 +548,6 @@ def _ensure_case_metadata(case_config, spec):
         cfg.outlier_values = None
 
 
-def _target_executor_spec(profile):
-    """适配本目录 executor 的字段和固定功能；不修改 executor。"""
-    profile = deepcopy(profile)
-    lengths = [length for length in _logical_lengths(profile) if length > 0]
-    capacity = profile["B"] * profile["T"]
-    # 此 executor 不屏蔽 padding 输出；补齐有效序列，避免比较未定义数据。
-    remaining = capacity - sum(lengths)
-    while remaining > 0:
-        length = min(8, remaining)
-        lengths.append(length)
-        remaining -= length
-    cu = [0]
-    for length in lengths:
-        cu.append(cu[-1] + length)
-    seq_num = len(lengths)
-    profile.update(
-        total_tokens=capacity, cu_seqlens=cu, seq_lengths=lengths,
-        cu_mode="uniform" if len(set(lengths)) == 1 else "varlen",
-        gate_dtype="fp32", beta_dtype="fp32", state_dtype="fp32",
-        state_capacity=seq_num, state_capacity_extra=0, seq_num=seq_num,
-        token_capacity=capacity, valid_tokens=capacity,
-        state_elements=seq_num * profile["HV"] * profile["K"] * profile["V"],
-        initial_state_none=False, state_noncontiguous=False, input_noncontiguous=False,
-        use_gate_in_kernel=True, safe_gate=False, lower_bound=-5.0,
-        use_qk_l2norm_in_kernel=False, use_beta_sigmoid_in_kernel=False,
-        allow_neg_eigval=False, output_final_state=True, inplace_final_state=False,
-        cu_dtype="int64", ssm_dtype="int64", accepted_dtype="int64",
-    )
-    if profile["dt_bias_mode"] not in ("flat", "matrix"):
-        profile["dt_bias_mode"] = "flat" if profile["case_id"] % 2 == 0 else "matrix"
-    mode = profile["ssm_mode"]
-    if mode == "packed":
-        profile["ssm_state_indices"] = [slot for slot, length in enumerate(lengths) for _ in range(length)]
-        profile["num_accepted_tokens"] = []
-    elif mode == "speculative":
-        max_step = max(lengths)
-        profile["ssm_state_indices"] = [[slot] * max_step for slot in range(seq_num)]
-        profile["num_accepted_tokens"] = [1 + (profile["case_id"] + slot) % length for slot, length in enumerate(lengths)]
-    else:
-        profile["ssm_state_indices"] = []
-        profile["num_accepted_tokens"] = []
-    profile["accepted_tokens"] = mode == "speculative"
-    return profile
-
-
 def _spec(index):
     if index < 0:
         raise IndexError(f"case index must be non-negative, got {index}")
@@ -608,7 +561,7 @@ def _spec(index):
             "soc": "ascend910b",
         }
     )
-    return _target_executor_spec(profile)
+    return profile
 
 
 if GENERATOR_REGISTRY is not None:
