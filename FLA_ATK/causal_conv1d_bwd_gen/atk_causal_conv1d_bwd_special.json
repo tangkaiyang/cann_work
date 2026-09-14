@@ -2809,15 +2809,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            -Infinity
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "-inf",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -3142,15 +3134,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            -Infinity
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "-inf",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -3405,15 +3389,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            Infinity
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "inf",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -3738,15 +3714,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            Infinity
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "inf",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -4001,15 +3969,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            NaN
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "nan",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -4334,15 +4294,7 @@
           1,
           16
         ],
-        "range_values": {
-          "name": "nd",
-          "mean": [
-            NaN
-          ],
-          "std": [
-            0.0
-          ]
-        },
+        "range_values": "nan",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
