@@ -37,6 +37,22 @@ atk.tasks.backends.backend.ATKRuntimeError: causal_conv1d_b1_t32768_d1536_dtype_
 prepare_wy_repr_bwd_dA bs1，seqlen=32k，num_head = 8；bs8，seqlen=4k，num_head = 32
 causal_conv_1d_bwd bs1，seqlen=32k，dim = 1536；bs8，seqlen=4k，dim  = 768
 recurrent_kda bs1，seqlen=32k，num_head = 4；bs8，seqlen=4k，num_head = 8
+HEADS = 96
+KEY_DIM = 128
+VALUE_DIM = 128
+DECODE_STEP = 1
+
+mode == "cb_mtp":
+        inputs["ssm_state_indices"] = torch.arange(
+            batch - 1,
+            -1,
+            -1,
+            dtype=torch.int32,
+        ).reshape(batch, 1)
+        inputs["num_accepted_tokens"] = torch.ones(
+            batch,
+            dtype=torch.int32,
+        )
 https://gitcode.com/chen-linxin4/work_tool/tree/atk-test/FLA_ATK/causal_conv1d_bwd
 https://github.com/flashserve/flash-linear-attention-npu
 
