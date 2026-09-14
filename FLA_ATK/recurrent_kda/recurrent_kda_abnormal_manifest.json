@@ -1,0 +1,177 @@
+[
+  {
+    "id": 0,
+    "name": "recurrent_kda_abnormal_query_fp32",
+    "input": "query",
+    "field": "dtype",
+    "value": "fp32",
+    "violated_constraint": "q/k/v only support BF16",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 1,
+    "name": "recurrent_kda_abnormal_key_dim_127",
+    "input": "key",
+    "field": "shape",
+    "value": [
+      1,
+      1,
+      96,
+      127
+    ],
+    "violated_constraint": "K must be 128 and match query",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 2,
+    "name": "recurrent_kda_abnormal_value_dim_127",
+    "input": "value",
+    "field": "shape",
+    "value": [
+      1,
+      1,
+      96,
+      127
+    ],
+    "violated_constraint": "V must be 128/256",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 3,
+    "name": "recurrent_kda_abnormal_query_rank_3",
+    "input": "query",
+    "field": "shape",
+    "value": [
+      1,
+      96,
+      128
+    ],
+    "violated_constraint": "BSND query must be rank 4",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 4,
+    "name": "recurrent_kda_abnormal_gate_head_mismatch",
+    "input": "gate",
+    "field": "shape",
+    "value": [
+      1,
+      1,
+      95,
+      128
+    ],
+    "violated_constraint": "gate heads must equal HV",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 5,
+    "name": "recurrent_kda_abnormal_beta_rank_2",
+    "input": "beta",
+    "field": "shape",
+    "value": [
+      1,
+      96
+    ],
+    "violated_constraint": "BSND beta must be rank 3",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 6,
+    "name": "recurrent_kda_abnormal_state_rank_3",
+    "input": "initialStateRef",
+    "field": "shape",
+    "value": [
+      96,
+      128,
+      128
+    ],
+    "violated_constraint": "state must be rank 4",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 7,
+    "name": "recurrent_kda_abnormal_state_key_127",
+    "input": "initialStateRef",
+    "field": "shape",
+    "value": [
+      1,
+      96,
+      127,
+      128
+    ],
+    "violated_constraint": "state K must match query K",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 8,
+    "name": "recurrent_kda_abnormal_layout_invalid",
+    "input": "layout",
+    "field": "range_values",
+    "value": "INVALID",
+    "violated_constraint": "layout supports BSND/TND",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 9,
+    "name": "recurrent_kda_abnormal_accepted_zero",
+    "input": "numAcceptedTokensOptional",
+    "field": "range_values",
+    "value": [
+      0
+    ],
+    "violated_constraint": "accepted token count must be at least 1",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 10,
+    "name": "recurrent_kda_abnormal_accepted_too_large",
+    "input": "numAcceptedTokensOptional",
+    "field": "range_values",
+    "value": [
+      2
+    ],
+    "violated_constraint": "accepted token count exceeds decode length 1",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 11,
+    "name": "recurrent_kda_abnormal_index_out_of_pool",
+    "input": "ssmStateIndicesOptional",
+    "field": "range_values",
+    "value": [
+      1
+    ],
+    "violated_constraint": "slot 1 exceeds state capacity 1",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 12,
+    "name": "recurrent_kda_abnormal_cu_start_nonzero",
+    "input": "cuSeqlensOptional",
+    "field": "range_values",
+    "value": [
+      1,
+      1
+    ],
+    "violated_constraint": "cu_seqlens must start at 0",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 13,
+    "name": "recurrent_kda_abnormal_gate_without_alog",
+    "input": "useGateInKernel",
+    "field": "range_values",
+    "value": true,
+    "violated_constraint": "in-kernel gate requires A_log",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  },
+  {
+    "id": 14,
+    "name": "recurrent_kda_abnormal_gate_dtype_int32",
+    "input": "gate",
+    "field": "dtype",
+    "value": "int32",
+    "violated_constraint": "gate only supports FP16/BF16/FP32",
+    "source_case": "recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16"
+  }
+]

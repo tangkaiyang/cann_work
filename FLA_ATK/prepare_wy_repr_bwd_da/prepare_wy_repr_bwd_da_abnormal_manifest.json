@@ -1,0 +1,185 @@
+[
+  {
+    "id": 0,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_dim_64",
+    "input": "k",
+    "field": "shape",
+    "value": [
+      1,
+      16,
+      4096,
+      64
+    ],
+    "violated_constraint": "K must be 128",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 1,
+    "name": "prepare_wy_repr_bwd_da_abnormal_value_dim_64",
+    "input": "v",
+    "field": "shape",
+    "value": [
+      1,
+      32,
+      4096,
+      64
+    ],
+    "violated_constraint": "V must be 128/256 and match du",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 2,
+    "name": "prepare_wy_repr_bwd_da_abnormal_heads_not_divisible",
+    "input": "k",
+    "field": "shape",
+    "value": [
+      1,
+      3,
+      4096,
+      128
+    ],
+    "violated_constraint": "HV=32 must be divisible by HK",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 3,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_batch_mismatch",
+    "input": "k",
+    "field": "shape",
+    "value": [
+      2,
+      16,
+      4096,
+      128
+    ],
+    "violated_constraint": "k/v batch must match",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 4,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_time_mismatch",
+    "input": "k",
+    "field": "shape",
+    "value": [
+      1,
+      16,
+      4095,
+      128
+    ],
+    "violated_constraint": "k/v T must match",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 5,
+    "name": "prepare_wy_repr_bwd_da_abnormal_a_chunk_mismatch",
+    "input": "a",
+    "field": "shape",
+    "value": [
+      1,
+      32,
+      4096,
+      63
+    ],
+    "violated_constraint": "A last dimension must equal chunkSize",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 6,
+    "name": "prepare_wy_repr_bwd_da_abnormal_chunk_size_32",
+    "input": "chunkSize",
+    "field": "range_values",
+    "value": 32,
+    "violated_constraint": "chunk size supports 64/128 only",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 7,
+    "name": "prepare_wy_repr_bwd_da_abnormal_dw_key_mismatch",
+    "input": "dw",
+    "field": "shape",
+    "value": [
+      1,
+      32,
+      4096,
+      127
+    ],
+    "violated_constraint": "dw last dimension must match K",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 8,
+    "name": "prepare_wy_repr_bwd_da_abnormal_du_time_mismatch",
+    "input": "du",
+    "field": "shape",
+    "value": [
+      1,
+      32,
+      4095,
+      256
+    ],
+    "violated_constraint": "du shape must match v",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 9,
+    "name": "prepare_wy_repr_bwd_da_abnormal_beta_rank_2",
+    "input": "beta",
+    "field": "shape",
+    "value": [
+      32,
+      4096
+    ],
+    "violated_constraint": "beta must have shape B,HV,T",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 10,
+    "name": "prepare_wy_repr_bwd_da_abnormal_gate_rank_2",
+    "input": "g",
+    "field": "shape",
+    "value": [
+      32,
+      4096
+    ],
+    "violated_constraint": "g must have shape B,HV,T",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 11,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_fp32",
+    "input": "k",
+    "field": "dtype",
+    "value": "fp32",
+    "violated_constraint": "k supports FP16/BF16 only",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 12,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_empty",
+    "input": "k",
+    "field": "shape",
+    "value": [
+      0
+    ],
+    "violated_constraint": "k must have rank 4 and K=128",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 13,
+    "name": "prepare_wy_repr_bwd_da_abnormal_key_scalar",
+    "input": "k",
+    "field": "shape",
+    "value": [],
+    "violated_constraint": "k must have rank 4",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  },
+  {
+    "id": 14,
+    "name": "prepare_wy_repr_bwd_da_abnormal_gate_int32",
+    "input": "g",
+    "field": "dtype",
+    "value": "int32",
+    "violated_constraint": "g supports floating-point types only",
+    "source_case": "prepare_wy_repr_bwd_da_gva_fix_1_fp16"
+  }
+]

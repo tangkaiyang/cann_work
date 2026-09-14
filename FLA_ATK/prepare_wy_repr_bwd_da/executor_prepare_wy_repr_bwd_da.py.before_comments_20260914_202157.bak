@@ -234,54 +234,6 @@ class PrepareWyReprBwdDaAclnnApi(AclnnBaseApi):
     aclOpExecutor **executor);"""
 
 
-# 异常用例约束说明（对应 atk_prepare_wy_repr_bwd_da_abnormal.json）。
-# 以下为各用例设计时违反的输入约束；固定输出标杆不执行约束校验。
-# 实际 DUT 的拒绝行为及报错需由运行结果确认。
-# case 00: prepare_wy_repr_bwd_da_abnormal_key_dim_64
-#   变异输入：k.shape = [1, 16, 4096, 64]
-#   违反约束：K must be 128
-# case 01: prepare_wy_repr_bwd_da_abnormal_value_dim_64
-#   变异输入：v.shape = [1, 32, 4096, 64]
-#   违反约束：V must be 128/256 and match du
-# case 02: prepare_wy_repr_bwd_da_abnormal_heads_not_divisible
-#   变异输入：k.shape = [1, 3, 4096, 128]
-#   违反约束：HV=32 must be divisible by HK
-# case 03: prepare_wy_repr_bwd_da_abnormal_key_batch_mismatch
-#   变异输入：k.shape = [2, 16, 4096, 128]
-#   违反约束：k/v batch must match
-# case 04: prepare_wy_repr_bwd_da_abnormal_key_time_mismatch
-#   变异输入：k.shape = [1, 16, 4095, 128]
-#   违反约束：k/v T must match
-# case 05: prepare_wy_repr_bwd_da_abnormal_a_chunk_mismatch
-#   变异输入：a.shape = [1, 32, 4096, 63]
-#   违反约束：A last dimension must equal chunkSize
-# case 06: prepare_wy_repr_bwd_da_abnormal_chunk_size_32
-#   变异输入：chunkSize.range_values = 32
-#   违反约束：chunk size supports 64/128 only
-# case 07: prepare_wy_repr_bwd_da_abnormal_dw_key_mismatch
-#   变异输入：dw.shape = [1, 32, 4096, 127]
-#   违反约束：dw last dimension must match K
-# case 08: prepare_wy_repr_bwd_da_abnormal_du_time_mismatch
-#   变异输入：du.shape = [1, 32, 4095, 256]
-#   违反约束：du shape must match v
-# case 09: prepare_wy_repr_bwd_da_abnormal_beta_rank_2
-#   变异输入：beta.shape = [32, 4096]
-#   违反约束：beta must have shape B,HV,T
-# case 10: prepare_wy_repr_bwd_da_abnormal_gate_rank_2
-#   变异输入：g.shape = [32, 4096]
-#   违反约束：g must have shape B,HV,T
-# case 11: prepare_wy_repr_bwd_da_abnormal_key_fp32
-#   变异输入：k.dtype = "fp32"
-#   违反约束：k supports FP16/BF16 only
-# case 12: prepare_wy_repr_bwd_da_abnormal_key_empty
-#   变异输入：k.shape = [0]
-#   违反约束：k must have rank 4 and K=128
-# case 13: prepare_wy_repr_bwd_da_abnormal_key_scalar
-#   变异输入：k.shape = []
-#   违反约束：k must have rank 4
-# case 14: prepare_wy_repr_bwd_da_abnormal_gate_int32
-#   变异输入：g.dtype = "int32"
-#   违反约束：g supports floating-point types only
 @register("npu_prepare_wy_repr_bwd_da_abnormal")
 class AbnormalReferenceApi(BaseApi):
     """Fixed zero reference for invalid-input tests; not a numerical golden.

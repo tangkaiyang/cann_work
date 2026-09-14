@@ -1,0 +1,163 @@
+[
+  {
+    "id": 0,
+    "name": "causal_conv1d_bwd_abnormal_x_rank_1",
+    "input": "x",
+    "field": "shape",
+    "value": [
+      1536
+    ],
+    "violated_constraint": "BSND x must be rank 3",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 1,
+    "name": "causal_conv1d_bwd_abnormal_x_scalar",
+    "input": "x",
+    "field": "shape",
+    "value": [],
+    "violated_constraint": "BSND x must be rank 3",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 2,
+    "name": "causal_conv1d_bwd_abnormal_weight_rank_1",
+    "input": "weight",
+    "field": "shape",
+    "value": [
+      1536
+    ],
+    "violated_constraint": "weight must be rank 2",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 3,
+    "name": "causal_conv1d_bwd_abnormal_weight_dim_mismatch",
+    "input": "weight",
+    "field": "shape",
+    "value": [
+      4,
+      1520
+    ],
+    "violated_constraint": "weight D must match x",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 4,
+    "name": "causal_conv1d_bwd_abnormal_dy_time_mismatch",
+    "input": "dy",
+    "field": "shape",
+    "value": [
+      1,
+      32767,
+      1536
+    ],
+    "violated_constraint": "dy token shape must match x",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 5,
+    "name": "causal_conv1d_bwd_abnormal_dy_rank_2",
+    "input": "dy",
+    "field": "shape",
+    "value": [
+      32768,
+      1536
+    ],
+    "violated_constraint": "BSND dy must be rank 3",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 6,
+    "name": "causal_conv1d_bwd_abnormal_x_int32",
+    "input": "x",
+    "field": "dtype",
+    "value": "int32",
+    "violated_constraint": "x supports floating-point types only",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 7,
+    "name": "causal_conv1d_bwd_abnormal_weight_dtype_mismatch",
+    "input": "weight",
+    "field": "dtype",
+    "value": "fp16",
+    "violated_constraint": "weight dtype must match BF16 x",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 8,
+    "name": "causal_conv1d_bwd_abnormal_activation_3",
+    "input": "activation",
+    "field": "range_values",
+    "value": 3,
+    "violated_constraint": "activation supports 0/1/2",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 9,
+    "name": "causal_conv1d_bwd_abnormal_activation_without_y",
+    "input": "activation",
+    "field": "range_values",
+    "value": 1,
+    "violated_constraint": "activation 1/2 requires y",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 10,
+    "name": "causal_conv1d_bwd_abnormal_layout_invalid",
+    "input": "inputLayoutOptional",
+    "field": "range_values",
+    "value": "INVALID",
+    "violated_constraint": "invalid layout",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 11,
+    "name": "causal_conv1d_bwd_abnormal_initial_wrong_width",
+    "input": "initialStateOptional",
+    "field": "present_shape",
+    "value": [
+      1,
+      3,
+      1536
+    ],
+    "violated_constraint": "initial state must be B,W,D",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 12,
+    "name": "causal_conv1d_bwd_abnormal_dht_wrong_dim",
+    "input": "dhtOptional",
+    "field": "present_shape",
+    "value": [
+      1,
+      4,
+      1520
+    ],
+    "violated_constraint": "dht must be B,W,D",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 13,
+    "name": "causal_conv1d_bwd_abnormal_y_wrong_time",
+    "input": "yOptional",
+    "field": "present_shape",
+    "value": [
+      1,
+      32767,
+      1536
+    ],
+    "violated_constraint": "provided y must match output shape",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  },
+  {
+    "id": 14,
+    "name": "causal_conv1d_bwd_abnormal_dy_dtype_mismatch",
+    "input": "dy",
+    "field": "dtype",
+    "value": "fp16",
+    "violated_constraint": "dy dtype must match x",
+    "source_case": "causal_conv1d_bwd_b1_t32768_dim1536_bf16"
+  }
+]
