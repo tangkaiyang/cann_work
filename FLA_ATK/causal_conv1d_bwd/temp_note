@@ -1,5 +1,39 @@
 causal_conv1d bs1，seqlen=32k，hidden_size =  1536/3072；bs8，seqlen=4k，hidden_size =  1536/3072
 {"id": 0, "default_seed": null, "name": "torch.npu.npu_causal_conv1d", "aclnn_name": "CausalConv1d", "triton_name": null, "kernel_name": null, "version": "v2.1", "expected_error_msg": null, "api": "pytorch", "api_type": "npu_causal_conv1d", "aclnn_api_type": "pyaclnn_causal_conv1d", "triton_api_type": "triton_function", "fusion_api_type": "fusion_function", "fusion_mode": null, "dist_api_type": "dist_function", "kernel_api_type": "kernel_function", "backward": false, "standard": {"acc": {"cv_fused_double_benchmark": {"max_re_ratio": 5, "avg_abs_ratio": 1.5, "root_mean_square_ratio": 1.5}}, "perf": "not_key", "mem": 1.1}, "outputs": null, "inputs": [{"name": "x", "type": "tensor", "required": true, "dtype": "bf16", "shape": [2, 16], "range_values": [-5, 5], "backward": true, "align_32B": null, "outlier_values": null}, {"name": "weight", "type": "tensor", "required": true, "dtype": "bf16", "shape": [2, 16], "range_values": [-5, 5], "backward": true, "align_32B": null, "outlier_values": null}, {"name": "bias", "type": "tensor", "required": false, "dtype": "bf16", "shape": [0], "range_values": [0], "backward": true, "align_32B": null, "outlier_values": null}, {"name": "conv_states", "type": "tensor", "required": true, "dtype": "bf16", "shape": [2, 1, 16], "range_values": [-5, 5], "backward": true, "align_32B": null, "outlier_values": null}, [{"name": "query_start_loc_cpu", "type": "attrs", "required": false, "dtype": "int", "shape": null, "range_values": 0, "backward": false, "align_32B": null, "outlier_values": null}, {"name": "query_start_loc_cpu", "type": "attrs", "required": false, "dtype": "int", "shape": null, "range_values": 2, "backward": false, "align_32B": null, "outlier_values": null}], [{"name": "cache_indices_cpu", "type": "attrs", "required": false, "dtype": "int", "shape": null, "range_values": 0, "backward": false, "align_32B": null, "outlier_values": null}], [{"name": "has_initial_state_cpu", "type": "attrs", "required": false, "dtype": "int", "shape": null, "range_values": -1152921504606846976, "backward": false, "align_32B": null, "outlier_values": null}], [{"name": "num_accepted_tokens_cpu", "type": "attrs", "required": false, "dtype": "int", "shape": null, "range_values": -1152921504606846976, "backward": false, "align_32B": null, "outlier_values": null}], {"name": "activation", "type": "attr", "required": true, "dtype": "string", "shape": null, "range_values": "none", "backward": false, "align_32B": null, "outlier_values": null}, {"name": "run_mode", "type": "attr", "required": true, "dtype": "int", "shape": null, "range_values": 1, "backward": false, "align_32B": null, "outlier_values": null}, {"name": "head_num", "type": "attr", "required": false, "dtype": "int", "shape": null, "range_values": 0, "backward": false, "align_32B": null, "outlier_values": null}], "acl_json": "", "method_inputs": null, "tensor_input": null, "compute_times": null, "save_name": null, "uuid": null, "downloaded": false, "is_boundary": false, "xrun_cs_name": null, "xrun_data": null, "strategy": null}
+bad err=15 in Xbyak::Error
+[2026-09-14 10:21:51] [ERROR] [ForkPoolWorker-1] [3265343] [opp_tasks.py:420]  Traceback (most recent call last):
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/backends/backend.py", line 330, in forward_run
+    return self.api_executor(input_data, with_output)
+  File "executor_causal_conv1d.py", line 918, in __call__
+    return run_causal_conv1d_reference(input_data)
+  File "executor_causal_conv1d.py", line 855, in run_causal_conv1d_reference
+    outputs = _run_prefill_varlen(
+  File "executor_causal_conv1d.py", line 455, in _run_prefill_varlen
+    y_seq, _ = causal_conv1d_ref(
+  File "executor_causal_conv1d.py", line 49, in causal_conv1d_ref
+    out = F.conv1d(x, weight.unsqueeze(1), bias, padding=width - 1, groups=dim)
+RuntimeError: illegal immediate parameter (range error)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/opp_tasks.py", line 406, in run_opp_task
+    run_benchmark_task(task_result, dataset_executor)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/opp_tasks.py", line 335, in run_benchmark_task
+    opp_executor.run_accuracy(save_output_info=True)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/common/utils.py", line 117, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/executors/opp_executor.py", line 95, in run_accuracy
+    output_data = self.backend.run_accuracy(self.is_backward)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/backends/backend.py", line 400, in run_accuracy
+    output = self.forward_run(with_output=True)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/backends/backend.py", line 72, in wrapped
+    result = attr(*args, **kwargs)
+  File "/home/miniconda3/envs/atk_tf/lib/python3.9/site-packages/atk/tasks/backends/backend.py", line 332, in forward_run
+    raise ATKRuntimeError(f"{self.task_result.case_config.name} run error!") from e
+atk.tasks.backends.backend.ATKRuntimeError: causal_conv1d_b1_t32768_d1536_dtype_bf16 run error!
+
+
 prepare_wy_repr_bwd_dA bs1，seqlen=32k，num_head = 8；bs8，seqlen=4k，num_head = 32
 causal_conv_1d_bwd bs1，seqlen=32k，dim = 1536；bs8，seqlen=4k，dim  = 768
 recurrent_kda bs1，seqlen=32k，num_head = 4；bs8，seqlen=4k，num_head = 8
