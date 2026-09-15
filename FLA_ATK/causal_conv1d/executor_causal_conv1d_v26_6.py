@@ -175,7 +175,7 @@ def _is_absent_tensor(value) -> bool:
 
 
 def _optional_tensor(value):
-    if value is None or _is_absent_tensor(value):
+    if value is None or (isinstance(value, str) and value == "null") or _is_absent_tensor(value):
         return None
     return value
 
@@ -912,154 +912,79 @@ def run_causal_conv1d_reference(input_data: InputDataset) -> tuple[torch.Tensor,
     )
 
 
-@register("npu_causal_conv1d")
-class CausalConv1dApi(BaseApi):
+# v26.6.0 ABI, verified against cf1947bff0e75522f9cc0bba5814e6705dc80aae.
+
+def _v266_reference_input(input_data):
+    from types import SimpleNamespace
+    kw = dict(input_data.kwargs)
+    for old, new in (("query_start_loc_cpu", "query_start_loc"),
+                     ("cache_indices_cpu", "cache_indices"),
+                     ("has_initial_state_cpu", "initial_state_mode"),
+                     ("num_accepted_tokens_cpu", "num_accepted_tokens")):
+        kw[old] = _optional_int_list(kw.get(new))
+    mode = kw["activation_mode"]
+    if mode not in (0, 1):
+        raise ValueError("v26.6 activation_mode must be 0 or 1")
+    kw["activation"] = "none" if mode == 0 else "silu"
+    return SimpleNamespace(kwargs=kw)
+
+
+@register("npu_causal_conv1d_v26_6")
+class CausalConv1dV266Api(BaseApi):
     def __call__(self, input_data: InputDataset, with_output: bool = False):
+        if self.device in {"npu", "pyaclnn"}:
+            from fla_npu.ops.ascendc import causal_conv1d
+            kw = input_data.kwargs
+            y = causal_conv1d(kw["x"], kw["weight"],
+                bias=_optional_tensor(kw.get("bias")), conv_states=kw["conv_states"],
+                query_start_loc=_optional_tensor(kw.get("query_start_loc")),
+                cache_indices=_optional_tensor(kw.get("cache_indices")),
+                initial_state_mode=_optional_tensor(kw.get("initial_state_mode")),
+                num_accepted_tokens=_optional_tensor(kw.get("num_accepted_tokens")),
+                activation_mode=kw["activation_mode"], pad_slot_id=kw["pad_slot_id"],
+                run_mode=kw["run_mode"], head_num=kw["head_num"])
+            return y, kw["conv_states"]
+        reference_input = _v266_reference_input(input_data)
         if self.device == "gpu":
-            return run_causal_conv1d_gpu(input_data, device_id=self.device_id)
-        return run_causal_conv1d_reference(input_data)
+            return run_causal_conv1d_gpu(reference_input, device_id=self.device_id)
+        return run_causal_conv1d_reference(reference_input)
 
 
-@register("pyaclnn_causal_conv1d")
-class CausalConv1dAclnnApi(AclnnBaseApi):
+@register("pyaclnn_causal_conv1d_v26_6")
+class CausalConv1dV266AclnnApi(AclnnBaseApi):
     def init_by_input_data(self, input_data: InputDataset):
-        x = input_data.kwargs["x"]
-        input_data.kwargs.setdefault("head_num", 0)
-        input_data.kwargs["bias"] = _optional_tensor(input_data.kwargs["bias"])
-        query_start_loc = _optional_int_list(input_data.kwargs["query_start_loc_cpu"])
-        cache_indices = _optional_int_list(input_data.kwargs["cache_indices_cpu"])
-        has_initial_state = _optional_int_list(input_data.kwargs["has_initial_state_cpu"])
-        num_accepted_tokens = _optional_int_list(input_data.kwargs["num_accepted_tokens_cpu"])
-        input_data.kwargs["query_start_loc_cpu"] = query_start_loc
-        input_data.kwargs["cache_indices_cpu"] = cache_indices
-        input_data.kwargs["has_initial_state_cpu"] = has_initial_state
-        input_data.kwargs["num_accepted_tokens_cpu"] = num_accepted_tokens
-        max_query_len = -1
-        if _is_varlen_2d_input(x, query_start_loc, int(input_data.kwargs["run_mode"])):
-            max_query_len = max(
-                (right - left for left, right in zip(query_start_loc, query_start_loc[1:])),
-                default=0,
-            )
-        self._max_query_len = max_query_len
-        self._pad_slot_mask_meta = {
-            "x": x,
-            "query_start_loc": query_start_loc,
-            "cache_indices": cache_indices,
-            "pad_slot_id": -1,
-            "run_mode": int(input_data.kwargs["run_mode"]),
-            "head_num": int(input_data.kwargs.get("head_num", 0)),
-        }
-
-        input_args = []
-        for name in ("x", "weight", "bias", "conv_states"):
-            value = input_data.kwargs[name]
-            if name == "bias" and value is None:
-                input_args.append(self._empty_acl_tensor())
-                continue
-            input_args.extend(self.backend.convert_input_data(value, name=name))
-
-        # Preferred device metadata slots are absent in this compatibility
-        # dataset; the four following *_cpu aclIntArray slots exercise the
-        # deprecated host-array ABI in the same ACLNN entry point.
-        input_args.extend(self._empty_acl_tensor() for _ in range(4))
-        for name in (
-            "query_start_loc_cpu",
-            "cache_indices_cpu",
-            "has_initial_state_cpu",
-            "num_accepted_tokens_cpu",
-        ):
-            value = input_data.kwargs[name]
+        kw = input_data.kwargs
+        args = []
+        for name in ("x", "weight", "bias", "conv_states", "query_start_loc",
+                     "cache_indices", "initial_state_mode", "num_accepted_tokens"):
+            value = _optional_tensor(kw.get(name))
             if value is None:
-                input_args.append(self._empty_acl_int_array())
-                continue
-            input_args.extend(self.backend.convert_input_data(value, name=name))
-
-        activation = str(input_data.kwargs["activation"])
-        self._activation_buffer = ctypes.create_string_buffer(activation.encode("utf-8"))
-        input_args.append(ctypes.cast(self._activation_buffer, ctypes.c_char_p))
-        # These vLLM-compatible sentinels are fixed by this legacy ATK
-        # dataset, so they have no InputDataset metadata for
-        # backend.convert_input_data() to consult.  Pass the generated ACLNN
-        # ABI's int64_t values explicitly instead.
-        input_args.extend((ctypes.c_int64(-1), ctypes.c_int64(-1)))
-        for name, value in (
-            ("run_mode", input_data.kwargs["run_mode"]),
-            ("head_num", input_data.kwargs["head_num"]),
-        ):
-            input_args.extend(self.backend.convert_input_data(value, name=name))
-        input_args.append(ctypes.c_int64(self._max_query_len))
-
-        output_packages = []
-        for index, output_data in enumerate(self.task_result.output_info_list):
-            output_packages.extend(self.backend.convert_output_data(output_data, index))
-        if len(output_packages) != 2:
-            raise ValueError(
-                f"causal_conv1d expects benchmark outputs (y, conv_states), got {len(output_packages)} outputs"
-            )
-
-        input_args.append(output_packages[0])
-        output_packages[:] = [output_packages[0], input_args[3]]
-        return input_args, output_packages
+                args.append(ctypes.POINTER(AclTensor)())
+            else:
+                args.extend(self.backend.convert_input_data(value, name=name))
+        for name in ("activation_mode", "pad_slot_id", "run_mode", "head_num"):
+            args.extend(self.backend.convert_input_data(kw[name], name=name))
+        outputs = []
+        for index, info in enumerate(self.task_result.output_info_list):
+            outputs.extend(self.backend.convert_output_data(info, index))
+        if len(outputs) != 2:
+            raise ValueError("expected reference outputs (y, conv_states)")
+        args.append(outputs[0])
+        self._pad_slot_mask_meta = dict(x=kw["x"],
+            query_start_loc=_optional_int_list(kw.get("query_start_loc")),
+            cache_indices=_optional_int_list(kw.get("cache_indices")),
+            pad_slot_id=kw["pad_slot_id"], run_mode=kw["run_mode"], head_num=kw["head_num"])
+        return args, [outputs[0], args[3]]
 
     def after_call(self, output_packages):
-        y, conv_states = (self.acl_tensor_to_torch(output_pack) for output_pack in output_packages)
-        return _finalize_backend_outputs(
-            y,
-            conv_states,
-            **self._pad_slot_mask_meta,
-        )
-
-    @staticmethod
-    def _empty_acl_int_array():
-        return ctypes.POINTER(AclIntArray)()
-
-    @staticmethod
-    def _empty_acl_tensor():
-        return ctypes.POINTER(AclTensor)()
+        y, states = (self.acl_tensor_to_torch(p) for p in output_packages)
+        return _finalize_backend_outputs(y, states, **self._pad_slot_mask_meta)
 
     def get_cpp_func_signature_type(self):
-        return (
-            "aclnnStatus aclnnCausalConv1dGetWorkspaceSize("
-            "const aclTensor *x, "
-            "const aclTensor *weight, "
-            "const aclTensor *biasOptional, "
-            "const aclTensor *convStates, "
-            "const aclTensor *queryStartLocOptional, "
-            "const aclTensor *cacheIndicesOptional, "
-            "const aclTensor *hasInitialStateOptional, "
-            "const aclTensor *numAcceptedTokensOptional, "
-            "const aclIntArray *queryStartLocCpuOptional, "
-            "const aclIntArray *cacheIndicesCpuOptional, "
-            "const aclIntArray *hasInitialStateCpuOptional, "
-            "const aclIntArray *numAcceptedTokensCpuOptional, "
-            "char *activationOptional, "
-            "int64_t padSlotId, "
-            "int64_t nullBlockId, "
-            "int64_t runMode, "
-            "int64_t headNum, "
-            "int64_t maxQueryLen, "
-            "const aclTensor *out, "
-            "uint64_t *workspaceSize, "
-            "aclOpExecutor **executor)"
-        )
-
-
-@register("npu_causal_conv1d_abnormal")
-class CausalConv1dAbnormalApi(BaseApi):
-    """Negative-case reference only: fixed zero placeholders, not convolution truth.
-
-    Shapes/dtypes match the first typical AC case (B=1,T=32768,D=1536,W=4).
-    The actual DUT remains pyaclnn_causal_conv1d; do not use this reference to
-    conclude that an invalid input was accepted correctly.
-    """
-    def __call__(self, input_data: InputDataset, with_output: bool = False):
-        if self.device == "cpu":
-            device = torch.device("cpu")
-        elif self.device == "gpu":
-            device = torch.device(f"cuda:{self.device_id}")
-        else:
-            raise RuntimeError("abnormal reference supports CPU/GPU only; use pyaclnn_causal_conv1d for DUT")
-        return (
-            torch.zeros((32768, 1536), dtype=torch.bfloat16, device=device),
-            torch.zeros((1, 3, 1536), dtype=torch.bfloat16, device=device),
-        )
+        return """aclnnStatus aclnnCausalConv1dGetWorkspaceSize(
+            const aclTensor *x, const aclTensor *weight, const aclTensor *bias,
+            aclTensor *convStates, const aclTensor *queryStartLoc,
+            const aclTensor *cacheIndices, const aclTensor *initialStateMode,
+            const aclTensor *numAcceptedTokens, int64_t activationMode,
+            int64_t padSlotId, int64_t runMode, int64_t headNum,
+            aclTensor *y, uint64_t *workspaceSize, aclOpExecutor **executor)"""
