@@ -941,36 +941,6 @@ class RecurrentKdaAclnnApi(AclnnBaseApi):
 # case 14: recurrent_kda_abnormal_gate_dtype_int32
 #   变异输入：gate.dtype = "int32"
 #   违反约束：gate only supports FP16/BF16/FP32
-def _abnormal_optional(value):
-    # Decode ATK absence markers only; preserve tensor shape/dtype/data.
-    if value is None or (isinstance(value, str) and value == "null"):
-        return None
-    if isinstance(value, (list, tuple)) and len(value) == 1 and isinstance(value[0], int) and value[0] == -(2**60):
-        return None
-    return value
-
-def _abnormal_fla_npu(kw):
-    # Call the real DUT without reference computation or error fallback.
-    from fla_npu.ops.ascendc import recurrent_kda as npu_recurrent_kda
-    outputs = npu_recurrent_kda(
-        kw["query"], kw["key"], kw["value"], kw["gate"],
-        kw["beta"], kw["initialStateRef"],
-        cu_seqlens=_abnormal_optional(kw.get("cuSeqlensOptional")),
-        ssm_state_indices=_abnormal_optional(kw.get("ssmStateIndicesOptional")),
-        A_log=_abnormal_optional(kw.get("aLogOptional")), dt_bias=_abnormal_optional(kw.get("dtBiasOptional")),
-        num_accepted_tokens=_abnormal_optional(kw.get("numAcceptedTokensOptional")),
-        layout=kw["layout"], scale=kw["scale"],
-        output_final_state=kw["outputFinalState"],
-        inplace_final_state=kw["inplaceFinalState"],
-        use_qk_l2norm_in_kernel=kw["useQkL2normInKernel"],
-        use_gate_in_kernel=kw["useGateInKernel"],
-        use_beta_sigmoid_in_kernel=kw["useBetaSigmoidInKernel"],
-        allow_neg_eigval=kw["allowNegEigval"], safe_gate=kw["safeGate"],
-        lower_bound=kw["lowerBound"], state_v_first=kw["stateVFirst"],
-    )
-    return (outputs[0],) if not kw["outputFinalState"] else outputs
-
-
 @register("npu_recurrent_kda_abnormal")
 class AbnormalReferenceApi(BaseApi):
     """ATK 执行入口。"""
@@ -986,8 +956,6 @@ class AbnormalReferenceApi(BaseApi):
 
     def __call__(self, input_data: InputDataset, with_output: bool = False):
         # CPU reference for abnormal cases: do not inspect invalid inputs.
-        if self.device in {"npu", "pyaclnn"}:
-            return _abnormal_fla_npu(input_data.kwargs)
         if self.device == "cpu":
             device = torch.device("cpu")
             return (torch.zeros((1, 1, 96, 128), dtype=torch.bfloat16, device=device), torch.zeros((1, 96, 128, 128), dtype=torch.float32, device=device),)
@@ -1005,8 +973,6 @@ class AbnormalReferenceApi(BaseApi):
         return _finite_tuple(outputs)
 
     def init_by_input_data(self, input_data: InputDataset):
-        if self.device in {"npu", "pyaclnn"}:
-            return None
         if self.device == "cpu":
             return None
         return super().init_by_input_data(input_data)

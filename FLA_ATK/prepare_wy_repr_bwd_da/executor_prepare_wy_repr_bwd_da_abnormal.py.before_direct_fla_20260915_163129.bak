@@ -282,23 +282,6 @@ class PrepareWyReprBwdDaAclnnApi(AclnnBaseApi):
 # case 14: prepare_wy_repr_bwd_da_abnormal_gate_int32
 #   变异输入：g.dtype = "int32"
 #   违反约束：g supports floating-point types only
-def _abnormal_optional(value):
-    # Decode ATK absence markers only; preserve tensor shape/dtype/data.
-    if value is None or (isinstance(value, str) and value == "null"):
-        return None
-    if isinstance(value, (list, tuple)) and len(value) == 1 and isinstance(value[0], int) and value[0] == -(2**60):
-        return None
-    return value
-
-def _abnormal_fla_npu(kw):
-    from fla_npu.ops.ascendc import prepare_wy_repr_bwd_da
-    return (prepare_wy_repr_bwd_da(kw.get("k"), kw.get("v"), kw.get("beta"),
-        kw.get("a"), kw.get("dw"), kw.get("du"), kw.get("g"),
-        chunk_size=kw.get("chunkSize"),
-        cu_seqlens=_abnormal_optional(kw.get("cuSeqlensOptional")),
-        chunk_indices=_abnormal_optional(kw.get("chunkIndicesOptional"))),)
-
-
 @register("npu_prepare_wy_repr_bwd_da_abnormal")
 class AbnormalReferenceApi(BaseApi):
     """ATK execution entry."""
@@ -313,8 +296,6 @@ class AbnormalReferenceApi(BaseApi):
 
     def __call__(self, input_data: InputDataset, with_output: bool = False):
         # CPU reference for abnormal cases: do not inspect invalid inputs.
-        if self.device in {"npu", "pyaclnn"}:
-            return _abnormal_fla_npu(input_data.kwargs)
         if self.device == "cpu":
             device = torch.device("cpu")
             return (torch.zeros((1, 32, 4096, 64), dtype=torch.float16, device=device),)
@@ -339,8 +320,6 @@ class AbnormalReferenceApi(BaseApi):
         return _finite_tuple(outputs)
 
     def init_by_input_data(self, input_data: InputDataset):
-        if self.device in {"npu", "pyaclnn"}:
-            return None
         if self.device == "cpu":
             return None
         return super().init_by_input_data(input_data)

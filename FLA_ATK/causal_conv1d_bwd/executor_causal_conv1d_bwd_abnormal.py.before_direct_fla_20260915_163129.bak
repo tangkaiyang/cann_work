@@ -549,24 +549,6 @@ class CausalConv1dBwdAclnnApi(AclnnBaseApi):
 # case 14: causal_conv1d_bwd_abnormal_dy_dtype_mismatch
 #   变异输入：dy.dtype = "fp16"
 #   违反约束：dy dtype must match x
-def _abnormal_optional(value):
-    # Decode ATK absence markers only; preserve tensor shape/dtype/data.
-    if value is None or (isinstance(value, str) and value == "null"):
-        return None
-    if isinstance(value, (list, tuple)) and len(value) == 1 and isinstance(value[0], int) and value[0] == -(2**60):
-        return None
-    return value
-
-def _abnormal_fla_npu(kw):
-    from fla_npu.ops.ascendc import causal_conv1d_bwd
-    return causal_conv1d_bwd(kw.get("x"), _abnormal_optional(kw.get("yOptional")),
-        kw.get("weight"), kw.get("dy"),
-        initial_state=_abnormal_optional(kw.get("initialStateOptional")),
-        dht=_abnormal_optional(kw.get("dhtOptional")),
-        query_start_loc=_abnormal_optional(kw.get("queryStartLocOptional")),
-        activation=kw.get("activation", 0), input_layout=kw.get("inputLayoutOptional", "BSND"))
-
-
 @register("npu_causal_conv1d_bwd_abnormal")
 class AbnormalReferenceApi(BaseApi):
     def __init__(self, task_result: TaskResult):
@@ -584,8 +566,6 @@ class AbnormalReferenceApi(BaseApi):
 
     def __call__(self, input_data: InputDataset, with_output: bool = False):
         # CPU reference for abnormal cases: do not inspect invalid inputs.
-        if self.device in {"npu", "pyaclnn"}:
-            return _abnormal_fla_npu(input_data.kwargs)
         if self.device == "cpu":
             device = torch.device("cpu")
             return (torch.zeros((1, 32768, 1536), dtype=torch.bfloat16, device=device), torch.zeros((4, 1536), dtype=torch.bfloat16, device=device), torch.zeros((1536,), dtype=torch.bfloat16, device=device), torch.zeros((1, 4, 1536), dtype=torch.bfloat16, device=device),)
@@ -603,8 +583,6 @@ class AbnormalReferenceApi(BaseApi):
         )
 
     def init_by_input_data(self, input_data: InputDataset):
-        if self.device in {"npu", "pyaclnn"}:
-            return None
         if self.device == "cpu":
             return None
         dtype = self._target_input_dtype()

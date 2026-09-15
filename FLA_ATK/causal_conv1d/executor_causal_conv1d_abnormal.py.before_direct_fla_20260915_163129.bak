@@ -1092,37 +1092,10 @@ class CausalConv1dAclnnApi(AclnnBaseApi):
 # case 14: causal_conv1d_abnormal_query_start_nonzero
 #   变异输入：query_start_loc_cpu.array = [1, 32768]
 #   违反约束：query_start_loc must start at 0
-def _abnormal_optional(value):
-    # Decode ATK absence markers only; preserve tensor shape/dtype/data.
-    if value is None or (isinstance(value, str) and value == "null"):
-        return None
-    if isinstance(value, (list, tuple)) and len(value) == 1 and isinstance(value[0], int) and value[0] == -(2**60):
-        return None
-    return value
-
-def _abnormal_fla_npu(kw):
-    from fla_npu.ops.ascendc import causal_conv1d
-    activation = kw.get("activation", "none")
-    if activation == "none":
-        activation = 0
-    elif activation in ("silu", "swish"):
-        activation = 1
-    result = causal_conv1d(kw.get("x"), kw.get("weight"),
-        bias=_abnormal_optional(kw.get("bias")), conv_states=kw.get("conv_states"),
-        query_start_loc=_abnormal_optional(kw.get("query_start_loc_cpu")),
-        cache_indices=_abnormal_optional(kw.get("cache_indices_cpu")),
-        initial_state_mode=_abnormal_optional(kw.get("has_initial_state_cpu")),
-        num_accepted_tokens=_abnormal_optional(kw.get("num_accepted_tokens_cpu")),
-        activation_mode=activation, run_mode=kw.get("run_mode", 0), head_num=kw.get("head_num", 0))
-    return result, kw.get("conv_states")
-
-
 @register("npu_causal_conv1d_abnormal")
 class CausalConv1dAbnormalApi(BaseApi):
     def __call__(self, input_data: InputDataset, with_output: bool = False):
         # CPU reference for abnormal cases: do not inspect invalid inputs.
-        if self.device in {"npu", "pyaclnn"}:
-            return _abnormal_fla_npu(input_data.kwargs)
         if self.device == "cpu":
             device = torch.device("cpu")
             return (
@@ -1134,8 +1107,6 @@ class CausalConv1dAbnormalApi(BaseApi):
         return run_causal_conv1d_reference(input_data)
 
     def init_by_input_data(self, input_data: InputDataset):
-        if self.device in {"npu", "pyaclnn"}:
-            return None
         if self.device == "cpu":
             return None
         return super().init_by_input_data(input_data)
