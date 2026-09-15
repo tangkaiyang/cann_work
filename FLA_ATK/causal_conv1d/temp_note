@@ -1,0 +1,8 @@
+aclnnCausalConv1dGetWorkspaceSize failed! error code: 161002
+ACL Error Details:
+[PID: 1434250] 2026-09-15-19:12:56.237.662 AclNN_Parameter_Error(EZ1001): Assert (memcpy_s(executor->args->inputKey.data(), executor->ownArgs.keyLen, executor->ownArgs.inputKey.data(), executor->ownArgs.keyLen) == 0) failed
+TraceBack (most recent call last):
+Check nnopbase::ArgsPool::GetInstance().CreateArgs(executor) failed
+Check NnopbaseExecutorTilingAndUpdateBinInfo(executor) failed
+Check NnopbaseExecutorMatchCache(executor) failed
+Check NnopbaseRunForWorkspace(*executor, workspaceSize) failed
