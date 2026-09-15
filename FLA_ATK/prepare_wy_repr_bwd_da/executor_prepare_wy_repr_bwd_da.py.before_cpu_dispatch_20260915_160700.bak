@@ -283,18 +283,17 @@ class PrepareWyReprBwdDaAclnnApi(AclnnBaseApi):
 #   变异输入：g.dtype = "int32"
 #   违反约束：g supports floating-point types only
 @register("npu_prepare_wy_repr_bwd_da_abnormal")
-class AbnormalReferenceApi(FunctionApi):
-    """CPU uses fixed abnormal outputs; other devices use the original API.
+class AbnormalReferenceApi(BaseApi):
+    """Fixed zero reference for invalid-input tests; not a numerical golden.
 
-    The existing ACLNN registration and DUT execution remain unchanged.
+    Source case: prepare_wy_repr_bwd_da_gva_fix_1_fp16
+    Actual DUT remains aclnn_prepare_wy_repr_bwd_da; errors are not caught here.
     """
-    def init_by_input_data(self, input_data: InputDataset):
-        if self.device == "cpu":
-            return None
-        return super().init_by_input_data(input_data)
-
     def __call__(self, input_data: InputDataset, with_output: bool = False):
-        if self.device != "cpu":
-            return super().__call__(input_data, with_output)
-        device = torch.device("cpu")
+        if self.device == "cpu":
+            device = torch.device("cpu")
+        elif self.device == "gpu":
+            device = torch.device(f"cuda:{self.device_id}")
+        else:
+            raise RuntimeError("abnormal reference is CPU/GPU only; run actual DUT through ACLNN")
         return (torch.zeros((1, 32, 4096, 64), dtype=torch.float16, device=device),)

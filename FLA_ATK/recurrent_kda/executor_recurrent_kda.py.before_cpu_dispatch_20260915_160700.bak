@@ -924,18 +924,17 @@ class RecurrentKdaAclnnApi(AclnnBaseApi):
 #   变异输入：gate.dtype = "int32"
 #   违反约束：gate only supports FP16/BF16/FP32
 @register("npu_recurrent_kda_abnormal")
-class AbnormalReferenceApi(FunctionApi):
-    """CPU uses fixed abnormal outputs; other devices use the original API.
+class AbnormalReferenceApi(BaseApi):
+    """Fixed zero reference for invalid-input tests; not a numerical golden.
 
-    The existing ACLNN registration and DUT execution remain unchanged.
+    Source case: recurrent_kda_cb_mtp_b1_t1_h96_k128_v128_bf16
+    Actual DUT remains aclnn_recurrent_kda; errors are not caught here.
     """
-    def init_by_input_data(self, input_data: InputDataset):
-        if self.device == "cpu":
-            return None
-        return super().init_by_input_data(input_data)
-
     def __call__(self, input_data: InputDataset, with_output: bool = False):
-        if self.device != "cpu":
-            return super().__call__(input_data, with_output)
-        device = torch.device("cpu")
+        if self.device == "cpu":
+            device = torch.device("cpu")
+        elif self.device == "gpu":
+            device = torch.device(f"cuda:{self.device_id}")
+        else:
+            raise RuntimeError("abnormal reference is CPU/GPU only; run actual DUT through ACLNN")
         return (torch.zeros((1, 1, 96, 128), dtype=torch.bfloat16, device=device), torch.zeros((1, 96, 128, 128), dtype=torch.float32, device=device),)
