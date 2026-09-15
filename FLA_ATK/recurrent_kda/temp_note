@@ -1,0 +1,21 @@
+case 1 run opp failed: recurrent_kda_abnormal_key_dim_127 run error!
+[2026-09-15 16:20:08] [ERROR] [127.0.0.1:9090@device_run_5] [722278] [opp_tasks.py:318]  recurrent_kda_abnormal_key_dim_127 run error!
+Traceback (most recent call last):
+  File "/home/miniforge3/envs/atk_fla/lib/python3.11/site-packages/atk/tasks/backends/backend.py", line 315, in forward_run
+    return self.api_executor(input_data, with_output)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/autotest/t30072652/FLA_ATK/recurrent_kda/executor_recurrent_kda_abnormal.py", line 946, in __call__
+    outputs = _run_direct_npu(data)
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/autotest/t30072652/FLA_ATK/recurrent_kda/executor_recurrent_kda_abnormal.py", line 808, in _run_direct_npu
+    return _run_direct_reference(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/autotest/t30072652/FLA_ATK/recurrent_kda/executor_recurrent_kda_abnormal.py", line 788, in _run_direct_reference
+    outputs = recurrent_kda_reference(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/autotest/t30072652/FLA_ATK/recurrent_kda/executor_recurrent_kda_abnormal.py", line 548, in recurrent_kda_reference
+    delta = v_flat[token, hv_idx] - torch.mv(state_cur, k_flat[token, h_idx])
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: mv:../third_party/op-plugin/op_plugin/ops/opapi/MvKernelNpuOpApi.cpp:49 NPU function error: call aclnnMv failed, error code is 161002
+[ERROR] 2026-09-15-16:20:08 (PID:722278, Device:5, RankID:-1) ERR00100 PTA call acl api failed.
+[PID: 722278] 2026-09-15-16:20:08.315.897 AclNN_Parameter_Error(EZ1001): Expected tensor for vec to have same size as [128], but got [127].
