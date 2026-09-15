@@ -283,44 +283,18 @@ class PrepareWyReprBwdDaAclnnApi(AclnnBaseApi):
 #   变异输入：g.dtype = "int32"
 #   违反约束：g supports floating-point types only
 @register("npu_prepare_wy_repr_bwd_da_abnormal")
-class AbnormalReferenceApi(BaseApi):
-    """ATK execution entry."""
+class AbnormalReferenceApi(FunctionApi):
+    """CPU uses fixed abnormal outputs; other devices use the original API.
 
-    def __init__(self, task_result: TaskResult):
-        super(AbnormalReferenceApi, self).__init__(task_result)
-        self.is_benchmark_task = bool(task_result.is_benchmark_task)
-        self.high_precision = (
-            self.device in {"cpu", "gpu"} and self.is_benchmark_task
-        )
-        self.gpu_control = self.device == "gpu" and not self.is_benchmark_task
-
-    def __call__(self, input_data: InputDataset, with_output: bool = False):
-        # CPU reference for abnormal cases: do not inspect invalid inputs.
-        if self.device == "cpu":
-            device = torch.device("cpu")
-            return (torch.zeros((1, 32, 4096, 64), dtype=torch.float16, device=device),)
-        inputs = {
-            name: _optional(input_data.kwargs.get(name))
-            for name in (
-                "k", "v", "beta", "a", "dw", "du", "g",
-                "cuSeqlensOptional", "chunkIndicesOptional", "chunkSize",
-            )
-        }
-        if any(inputs[name] is None for name in ("k", "v", "beta", "a", "dw", "du", "g", "chunkSize")):
-            raise ValueError("missing required PrepareWyReprBwdDa input")
-        if self.device in {"cpu", "gpu", "npu", "pyaclnn"}:
-            outputs = run_torch_reference(
-                inputs,
-                self.high_precision,
-            )
-        else:
-            raise RuntimeError(
-                f"{OP_NAME} requires an NPU DUT and a CPU or GPU reference node"
-            )
-        return _finite_tuple(outputs)
-
+    The existing ACLNN registration and DUT execution remain unchanged.
+    """
     def init_by_input_data(self, input_data: InputDataset):
         if self.device == "cpu":
             return None
         return super().init_by_input_data(input_data)
 
+    def __call__(self, input_data: InputDataset, with_output: bool = False):
+        if self.device != "cpu":
+            return super().__call__(input_data, with_output)
+        device = torch.device("cpu")
+        return (torch.zeros((1, 32, 4096, 64), dtype=torch.float16, device=device),)
