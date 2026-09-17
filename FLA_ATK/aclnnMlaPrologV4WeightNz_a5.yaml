@@ -1,0 +1,529 @@
+# aclnnMlaPrologv4WeightNz ATK metadata for A5 (ascend950)
+# Doc: A5 supports all quant scenes. This script covers modes backed by
+# function_mla_prolog_v4.py golden (wq=0/1/2/3). wq=4/5 (fp8/hif8) not generated
+# until golden support is added.
+# Scenes:
+#   - wq=0 kvq=0: non-quant
+#   - wq=1 kvq=0: partial quant, kvCache non-quant
+#   - wq=1 kvq=2: partial quant, kvCache per-channel
+#   - wq=2 kvq=0: int8 full quant, kvCache non-quant
+#   - wq=3 kvq=1 qq=1: mxfp8 full quant + kv per-tensor + query quant
+api: pytorch
+api_type: function_mla_prolog_v4
+aclnn_api_type: pyaclnn_function_mla_prolog_v4
+version: v2.1
+name: aclnn.MlaPrologV4WeightNz
+aclnn_name: MlaPrologV4WeightNz
+generate: ascend_generate_aclnn_mla_prolog_v4_a5
+dtype_numbers: 100
+extra_numbers: 0
+backward: false
+standard:
+  # 与 A5 已验证 all_mla_prolog_v4.json 对齐；需配合 node: pyaclnn + npu
+  acc:
+    cv_fused_double_benchmark:
+      max_re_ratio: 2
+      avg_re_ratio: 1.2
+      root_mean_squared_ratio: 1.2
+inputs:
+  # 0 tokenX  BS合轴 (T, He)
+  - name: token_x
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8, fp8e4m3]
+    ranges:
+      valid:
+        values: [[-2, 2]]
+      invalid:
+        values: [[-2, 2]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 1 weightDq  FRACTAL_NZ (He, Hcq)
+  - name: weight_dq
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8, fp8e4m3]
+    ranges:
+      valid:
+        values: [[-2, 2]]
+      invalid:
+        values: [[-2, 2]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 2 weightUqQr  FRACTAL_NZ (Hcq, N*(D+Dr))
+  - name: weight_uq_qr
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8, fp8e4m3]
+    ranges:
+      valid:
+        values: [[-2, 2]]
+      invalid:
+        values: [[-2, 2]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 3 weightUk  ND (N, D, Hckv)
+  - name: weight_uk
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        values: [[-2, 2]]
+      invalid:
+        values: [[-2, 2]]
+    shapes:
+      dim_numbers:
+        values: [3]
+      dim_values:
+        values: [[1, 100], [1, 100], [1, 100]]
+
+  # 4 weightDkvKr  FRACTAL_NZ (He, Hckv+Dr)
+  - name: weight_dkv_kr
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8, fp8e4m3]
+    ranges:
+      valid:
+        values: [[-2, 2]]
+      invalid:
+        values: [[-2, 2]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 5 rmsnormGammaCq
+  - name: rmsnorm_gamma_cq
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        values: [[-1, 1]]
+      invalid:
+        values: [[-1, 1]]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [[1, 100]]
+
+  # 6 rmsnormGammaCkv
+  - name: rmsnorm_gamma_ckv
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        values: [[-1, 1]]
+      invalid:
+        values: [[-1, 1]]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [[1, 100]]
+
+  # 7 ropeSin
+  - name: rope_sin
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        values: [[-1, 1]]
+      invalid:
+        values: [[-1, 1]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 8 ropeCos
+  - name: rope_cos
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16]
+    ranges:
+      valid:
+        values: [[-1, 1]]
+      invalid:
+        values: [[-1, 1]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 9 kvCacheRef
+  - name: kv_cache
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8, fp8e4m3]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: [0]
+    shapes:
+      dim_numbers:
+        values: [4]
+      dim_values:
+        values: [[1, 100], [1, 100], [1, 100], [1, 100]]
+
+  # 10 krCacheRef
+  - name: kr_cache
+    type: tensor
+    required: true
+    dtypes:
+      values: [bf16, int8]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: [0]
+    shapes:
+      dim_numbers:
+        values: [4]
+      dim_values:
+        values: [[1, 100], [1, 100], [1, 100], [1, 100]]
+
+  # 11 cacheIndexOptional
+  - name: cache_index
+    type: tensor
+    required: true
+    dtypes:
+      values: [int64]
+    ranges:
+      valid:
+        values: [[0, 100]]
+      invalid:
+        values: [[0, 100]]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [[1, 100]]
+
+  # 12 dequantScaleXOptional
+  # wq=2: fp32 (T,1); wq=3: uint8 placeholder (T, He/32) rewritten to e8m0 in plugin
+  - name: dequant_scale_x
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32, uint8]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 13 dequantScaleWDqOptional
+  - name: dequant_scale_w_dq
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32, uint8]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 14 dequantScaleWUqQrOptional
+  - name: dequant_scale_w_uq_qr
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32, uint8]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 15 dequantScaleWDkvKrOptional
+  - name: dequant_scale_w_dkv_kr
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32, uint8]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 16 quantScaleCkvOptional  kvq=1:(1); kvq=2:(1,Hckv)
+  - name: quant_scale_ckv
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [1, 2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 17 quantScaleCkrOptional
+  - name: quant_scale_ckr
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 18 smoothScalesCqOptional
+  - name: smooth_scales_cq
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0.001, 0.01]]
+      invalid:
+        values: [[0.001, 0.01]]
+    shapes:
+      dim_numbers:
+        values: [2]
+      dim_values:
+        values: [[1, 100], [1, 100]]
+
+  # 19 actualSeqLenOptional
+  - name: actual_seq_len
+    type: tensor
+    required: false
+    dtypes:
+      values: [int32]
+    ranges:
+      valid:
+        values: [[1, 128]]
+      invalid:
+        values: [[1, 128]]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [[1, 100]]
+
+  # 20 kNopeClipAlphaOptional
+  - name: k_nope_clip_alpha
+    type: tensor
+    required: false
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[0.5, 2.0]]
+      invalid:
+        values: [[0.5, 2.0]]
+    shapes:
+      dim_numbers:
+        values: [1]
+      dim_values:
+        values: [[1, 1]]
+
+  # 21 rmsnormEpsilonCq
+  - name: rmsnormEpsilonCq
+    type: attr
+    required: true
+    dtypes:
+      values: [double]
+    ranges:
+      valid:
+        values: [0.00001]
+      invalid:
+        values: [0.00001]
+
+  # 22 rmsnormEpsilonCkv
+  - name: rmsnormEpsilonCkv
+    type: attr
+    required: true
+    dtypes:
+      values: [double]
+    ranges:
+      valid:
+        values: [0.00001]
+      invalid:
+        values: [0.00001]
+
+  # 23 cacheModeOptional
+  - name: cacheMode
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: ["PA_BSND"]
+      invalid:
+        values: ["PA_BSND"]
+
+  # 24 weightQuantMode  A5: 0/1/2/3 (mxfp8); 4/5 reserved
+  - name: weightQuantMode
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [0, 1, 2, 3]
+      invalid:
+        values: [0, 1, 2, 3]
+
+  # 25 kvCacheQuantMode
+  - name: kvCacheQuantMode
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [0, 1, 2]
+      invalid:
+        values: [0, 1, 2]
+
+  # 26 queryQuantMode
+  - name: queryQuantMode
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [0, 1]
+      invalid:
+        values: [0, 1]
+
+  # 27 ckvkrRepoMode
+  - name: ckvkrRepoMode
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: [0]
+
+  # 28 quantScaleRepoMode
+  - name: quantScaleRepoMode
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: [0]
+
+  # 29 tileSize
+  - name: tileSize
+    type: attr
+    required: true
+    dtypes:
+      values: [int64_t]
+    ranges:
+      valid:
+        values: [128]
+      invalid:
+        values: [128]
+
+  # 30 qcQrScale
+  - name: qcQrScale
+    type: attr
+    required: true
+    dtypes:
+      values: [double]
+    ranges:
+      valid:
+        values: [1.0]
+      invalid:
+        values: [1.0]
+
+  # 31 kcScale
+  - name: kcScale
+    type: attr
+    required: true
+    dtypes:
+      values: [double]
+    ranges:
+      valid:
+        values: [1.0]
+      invalid:
+        values: [1.0]
+
+  # 32 doRope  ropeSin/ropeCos 始终必选；是否执行 RoPE 仅由本开关控制
+  - name: doRope
+    type: attr
+    required: true
+    dtypes:
+      values: [bool]
+    ranges:
+      valid:
+        values: [true, false]
+      invalid:
+        values: [true, false]
