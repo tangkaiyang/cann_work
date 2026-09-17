@@ -6,7 +6,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -88,85 +88,76 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          2
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -192,20 +183,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 1,
@@ -214,7 +194,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -296,85 +276,76 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          2
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -400,20 +371,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 2,
@@ -422,7 +382,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -504,85 +464,76 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          2
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -608,20 +559,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 3,
@@ -630,7 +570,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -712,85 +652,76 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          2
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          1
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -816,20 +747,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 4,
@@ -838,7 +758,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -920,85 +840,307 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4096,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 8192,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 12288,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 16384,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 20480,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 24576,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 28672,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 1,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 2,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 3,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 5,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 6,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 7,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          9
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1024,20 +1166,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 5,
@@ -1046,7 +1177,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -1128,85 +1259,307 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4096,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 8192,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 12288,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 16384,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 20480,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 24576,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 28672,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 1,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 2,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 3,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 5,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 6,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 7,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          9
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1232,20 +1585,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 6,
@@ -1254,7 +1596,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -1336,85 +1678,307 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4096,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 8192,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 12288,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 16384,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 20480,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 24576,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 28672,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 1,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 2,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 3,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 5,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 6,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 7,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          9
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1440,20 +2004,9 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   },
   {
     "id": 7,
@@ -1462,7 +2015,7 @@
     "aclnn_name": "CausalConv1d",
     "version": "v2.1",
     "api": "pytorch",
-    "api_type": "npu_causal_conv1d_v26_6",
+    "api_type": "npu_causal_conv1d",
     "expected_error_msg": null,
     "backward": false,
     "standard": {
@@ -1544,85 +2097,307 @@
         "align_32B": null,
         "outlier_values": null
       },
+      [
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4096,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 8192,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 12288,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 16384,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 20480,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 24576,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 28672,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "query_start_loc_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 32768,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 1,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 2,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 3,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 4,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 5,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 6,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "cache_indices_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 7,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        },
+        {
+          "name": "has_initial_state_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": 0,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
+      [
+        {
+          "name": "num_accepted_tokens_cpu",
+          "type": "attrs",
+          "required": false,
+          "dtype": "int",
+          "shape": null,
+          "range_values": -1152921504606846976,
+          "backward": false,
+          "align_32B": null,
+          "outlier_values": null
+        }
+      ],
       {
-        "name": "query_start_loc",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          9
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "cache_indices",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "initial_state_mode",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          8
-        ],
-        "range_values": [
-          0,
-          0
-        ],
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "num_accepted_tokens",
-        "type": "tensor",
-        "required": false,
-        "dtype": "int64",
-        "shape": [
-          0
-        ],
-        "range_values": "null",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "activation_mode",
+        "name": "activation",
         "type": "attr",
         "required": true,
-        "dtype": "int",
+        "dtype": "string",
         "shape": null,
-        "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "pad_slot_id",
-        "type": "attr",
-        "required": true,
-        "dtype": "int",
-        "shape": null,
-        "range_values": -1,
+        "range_values": "none",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1648,19 +2423,8 @@
         "backward": false,
         "align_32B": null,
         "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
       }
     ],
-    "aclnn_api_type": "pyaclnn_causal_conv1d_v26_6"
+    "aclnn_api_type": "pyaclnn_causal_conv1d"
   }
 ]
