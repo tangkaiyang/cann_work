@@ -1,13 +1,10 @@
-# aclnnMlaPrologv4WeightNz ATK metadata for A5 (ascend950)
-# Doc: A5 supports all quant scenes. This script covers modes backed by
-# function_mla_prolog_v4.py golden (wq=0/1/2/3). wq=4/5 (fp8/hif8) not generated
-# until golden support is added.
-# Scenes:
-#   - wq=0 kvq=0: non-quant
-#   - wq=1 kvq=0: partial quant, kvCache non-quant
-#   - wq=1 kvq=2: partial quant, kvCache per-channel
-#   - wq=2 kvq=0: int8 full quant, kvCache non-quant
-#   - wq=3 kvq=1 qq=1: mxfp8 full quant + kv per-tensor + query quant
+# A5 / Ascend 950: document-driven legal case generalization.
+# Source: aclnnMlaPrologV4WeightNz.md (downloaded interface reference).
+# MLA_V4_PROFILE=golden (default): wq 0..3; full: wq 0..5 (16 scenes).
+# Full profile requires fp8/hif8 golden + plugin support; hif8 is the dtype alias.
+# Generator binds correlated shapes/dtypes/attrs; do not sample attrs independently.
+# Logical weights must be converted to FRACTAL_NZ by the existing adapter.
+# uint8 MX scale placeholders must be converted to e8m0 by the existing adapter.
 api: pytorch
 api_type: function_mla_prolog_v4
 aclnn_api_type: pyaclnn_function_mla_prolog_v4
@@ -15,7 +12,7 @@ version: v2.1
 name: aclnn.MlaPrologV4WeightNz
 aclnn_name: MlaPrologV4WeightNz
 generate: ascend_generate_aclnn_mla_prolog_v4_a5
-dtype_numbers: 100
+dtype_numbers: 500
 extra_numbers: 0
 backward: false
 standard:
@@ -26,12 +23,14 @@ standard:
       avg_re_ratio: 1.2
       root_mean_squared_ratio: 1.2
 inputs:
-  # 0 tokenX  BS合轴 (T, He)
+  # 0 tokenX: (T, He) or (B, S, He)
+  # Generator preserves valid shapes and repairs out-of-range dimensions. Default: (B, S, 7168).
+  # For (T, He), use dim_numbers [2] and dim_values [[0, 256], [7168, 7168]].
   - name: token_x
     type: tensor
     required: true
     dtypes:
-      values: [bf16, int8, fp8e4m3]
+      values: [bf16, int8, fp8e4m3, hif8]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -39,16 +38,16 @@ inputs:
         values: [[-2, 2]]
     shapes:
       dim_numbers:
-        values: [2]
+        values: [3]
       dim_values:
-        values: [[1, 100], [1, 100]]
+        values: [[0, 4], [0, 256], [7168, 7168]]
 
   # 1 weightDq  FRACTAL_NZ (He, Hcq)
   - name: weight_dq
     type: tensor
     required: true
     dtypes:
-      values: [bf16, int8, fp8e4m3]
+      values: [bf16, int8, fp8e4m3, hif8]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -65,7 +64,7 @@ inputs:
     type: tensor
     required: true
     dtypes:
-      values: [bf16, int8, fp8e4m3]
+      values: [bf16, int8, fp8e4m3, hif8]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -99,7 +98,7 @@ inputs:
     type: tensor
     required: true
     dtypes:
-      values: [bf16, int8, fp8e4m3]
+      values: [bf16, int8, fp8e4m3, hif8]
     ranges:
       valid:
         values: [[-2, 2]]
@@ -148,7 +147,7 @@ inputs:
   # 7 ropeSin
   - name: rope_sin
     type: tensor
-    required: true
+    required: false
     dtypes:
       values: [bf16]
     ranges:
@@ -158,14 +157,14 @@ inputs:
         values: [[-1, 1]]
     shapes:
       dim_numbers:
-        values: [2]
+        values: [2, 3]
       dim_values:
-        values: [[1, 100], [1, 100]]
+        values: [[0, 256], [0, 256], [1, 8192]]
 
   # 8 ropeCos
   - name: rope_cos
     type: tensor
-    required: true
+    required: false
     dtypes:
       values: [bf16]
     ranges:
@@ -175,16 +174,16 @@ inputs:
         values: [[-1, 1]]
     shapes:
       dim_numbers:
-        values: [2]
+        values: [2, 3]
       dim_values:
-        values: [[1, 100], [1, 100]]
+        values: [[0, 256], [0, 256], [1, 8192]]
 
   # 9 kvCacheRef
   - name: kv_cache
     type: tensor
     required: true
     dtypes:
-      values: [bf16, int8, fp8e4m3]
+      values: [bf16, int8, fp8e4m3, hif8]
     ranges:
       valid:
         values: [0]
@@ -192,7 +191,7 @@ inputs:
         values: [0]
     shapes:
       dim_numbers:
-        values: [4]
+        values: [3, 4]
       dim_values:
         values: [[1, 100], [1, 100], [1, 100], [1, 100]]
 
@@ -209,14 +208,14 @@ inputs:
         values: [0]
     shapes:
       dim_numbers:
-        values: [4]
+        values: [1, 3, 4]
       dim_values:
         values: [[1, 100], [1, 100], [1, 100], [1, 100]]
 
   # 11 cacheIndexOptional
   - name: cache_index
     type: tensor
-    required: true
+    required: false
     dtypes:
       values: [int64]
     ranges:
@@ -226,9 +225,9 @@ inputs:
         values: [[0, 100]]
     shapes:
       dim_numbers:
-        values: [1]
+        values: [1, 2]
       dim_values:
-        values: [[1, 100]]
+        values: [[0, 256], [0, 256]]
 
   # 12 dequantScaleXOptional
   # wq=2: fp32 (T,1); wq=3: uint8 placeholder (T, He/32) rewritten to e8m0 in plugin
@@ -392,9 +391,9 @@ inputs:
       values: [double]
     ranges:
       valid:
-        values: [0.00001]
+        values: [0.000001, 0.00001, 0.0001]
       invalid:
-        values: [0.00001]
+        values: [0.000001, 0.00001, 0.0001]
 
   # 22 rmsnormEpsilonCkv
   - name: rmsnormEpsilonCkv
@@ -404,9 +403,9 @@ inputs:
       values: [double]
     ranges:
       valid:
-        values: [0.00001]
+        values: [0.000001, 0.00001, 0.0001]
       invalid:
-        values: [0.00001]
+        values: [0.000001, 0.00001, 0.0001]
 
   # 23 cacheModeOptional
   - name: cacheMode
@@ -416,11 +415,11 @@ inputs:
       values: [string]
     ranges:
       valid:
-        values: ["PA_BSND"]
+        values: ["PA_BSND", "PA_NZ", "PA_BLK_BSND", "PA_BLK_NZ", "BSND", "TND"]
       invalid:
-        values: ["PA_BSND"]
+        values: ["PA_BSND", "PA_NZ", "PA_BLK_BSND", "PA_BLK_NZ", "BSND", "TND"]
 
-  # 24 weightQuantMode  A5: 0/1/2/3 (mxfp8); 4/5 reserved
+  # 24 weightQuantMode: profile controls whether 4/5 are generated
   - name: weightQuantMode
     type: attr
     required: true
@@ -428,9 +427,9 @@ inputs:
       values: [int64_t]
     ranges:
       valid:
-        values: [0, 1, 2, 3]
+        values: [0, 1, 2, 3, 4, 5]
       invalid:
-        values: [0, 1, 2, 3]
+        values: [0, 1, 2, 3, 4, 5]
 
   # 25 kvCacheQuantMode
   - name: kvCacheQuantMode
@@ -440,9 +439,9 @@ inputs:
       values: [int64_t]
     ranges:
       valid:
-        values: [0, 1, 2]
+        values: [0, 1, 2, 3]
       invalid:
-        values: [0, 1, 2]
+        values: [0, 1, 2, 3]
 
   # 26 queryQuantMode
   - name: queryQuantMode
@@ -464,9 +463,9 @@ inputs:
       values: [int64_t]
     ranges:
       valid:
-        values: [0]
+        values: [0, 1]
       invalid:
-        values: [0]
+        values: [0, 1]
 
   # 28 quantScaleRepoMode
   - name: quantScaleRepoMode
@@ -476,9 +475,9 @@ inputs:
       values: [int64_t]
     ranges:
       valid:
-        values: [0]
+        values: [0, 1]
       invalid:
-        values: [0]
+        values: [0, 1]
 
   # 29 tileSize
   - name: tileSize
@@ -500,9 +499,9 @@ inputs:
       values: [double]
     ranges:
       valid:
-        values: [1.0]
+        values: [0.5, 1.0, 2.0]
       invalid:
-        values: [1.0]
+        values: [0.5, 1.0, 2.0]
 
   # 31 kcScale
   - name: kcScale
@@ -512,11 +511,11 @@ inputs:
       values: [double]
     ranges:
       valid:
-        values: [1.0]
+        values: [0.5, 1.0, 2.0]
       invalid:
-        values: [1.0]
+        values: [0.5, 1.0, 2.0]
 
-  # 32 doRope  ropeSin/ropeCos 始终必选；是否执行 RoPE 仅由本开关控制
+  # 32 doRope: true requires sin/cos; false requires both nullptr
   - name: doRope
     type: attr
     required: true
