@@ -914,23 +914,6 @@ def run_causal_conv1d_reference(input_data: InputDataset) -> tuple[torch.Tensor,
 
 # v26.6.0 ABI, verified against cf1947bff0e75522f9cc0bba5814e6705dc80aae.
 
-def _v266_prepare_metadata(input_data):
-    # ATK int64 tensors are placeholders; exact values are stored as a string attr.
-    import json
-    kw = input_data.kwargs
-    raw = kw.get("metadata_values")
-    if raw is None:
-        return
-    for name, values in json.loads(raw).items():
-        if name not in {"query_start_loc", "cache_indices", "initial_state_mode", "num_accepted_tokens"}:
-            raise ValueError(f"unexpected metadata tensor: {name}")
-        placeholder = kw[name]
-        exact = torch.tensor(values, dtype=torch.int64, device=placeholder.device)
-        if tuple(exact.shape) != tuple(placeholder.shape):
-            raise ValueError(f"metadata shape mismatch: {name}")
-        placeholder.copy_(exact)
-
-
 def _v266_reference_input(input_data):
     from types import SimpleNamespace
     kw = dict(input_data.kwargs)
@@ -949,7 +932,6 @@ def _v266_reference_input(input_data):
 @register("npu_causal_conv1d_v26_6")
 class CausalConv1dV266Api(BaseApi):
     def __call__(self, input_data: InputDataset, with_output: bool = False):
-        _v266_prepare_metadata(input_data)
         if self.device in {"npu", "pyaclnn"}:
             from fla_npu.ops.ascendc import causal_conv1d
             kw = input_data.kwargs
@@ -971,7 +953,6 @@ class CausalConv1dV266Api(BaseApi):
 @register("pyaclnn_causal_conv1d_v26_6")
 class CausalConv1dV266AclnnApi(AclnnBaseApi):
     def init_by_input_data(self, input_data: InputDataset):
-        _v266_prepare_metadata(input_data)
         kw = input_data.kwargs
         args = []
         for name in ("x", "weight", "bias", "conv_states", "query_start_loc",

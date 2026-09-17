@@ -16,3 +16,10 @@
 - 部署方式：把 <op>_gen 下三个同名文件（yaml/gen/executor）拷入源仓 tests/atk/<op>/ 覆盖即可，executor 依赖 ../common/_ascendc_common_executor.py，目录层级不变。
 - 离线校验：_sanity_check_gen.py（atk 桩，全量 profile 约束校验）与 _sanity_check_exec.py（torch 真跑 run_cpu），依赖 _stub_common\ 下的 torch 版公共桩；managed python 已装 numpy + torch-cpu 2.14（pip 走代理 7897，--index-url https://download.pytorch.org/whl/cpu）。
 - 关键语义陷阱：prepare_wy_repr_bwd_da 的 CPU golden（test_da.py::compute_dA_cpu）把 b_dA.T 存入 dA，即存储块严格上三角非零、下三角含对角恒零；recurrent_kda BSND 多段时 packed 容量 B*T 必须被 cu_seqlens 末项用满；speculative 索引的 max_step 必须 >= 最大段长。
+
+## 246 服务器 conda 环境（2026-09-15）
+- conda 在 /root/miniconda3（非交互 shell 无 conda 命令，直接用绝对路径 /root/miniconda3/bin/conda；envs 在 /root/miniconda3/envs/，含 atk_fla、atk_fla_630 等）。
+- **atk_fla_630**（2026-09-15 建）：`conda create -n atk_fla_630 --clone atk_fla`（Python 3.11.16, 2.8G, torch 2.12.0+cpu + triton_ascend 3.2.1），装了 flash-linear-attention-npu **26.6.0** 950.x86_64（源环境 atk_fla 是 26.7.0.dev0）。wheel 从 GitHub release v26.6.0 下载，本机走 7897 代理下载后 scp 上去（246 直连 GitHub 不通）。
+- 两个环境裸 `import torch` 都报 torch_npu 后端加载错，是没 source CANN 的正常现象：先 `source /usr/local/Ascend/ascend-toolkit/set_env.sh` 即可 torch+npu 正常。
+- flash-linear-attention-npu 的顶层包是 `fla` 和 `fla_npu`（不是 flash_linear_attention_npu），fla_npu 导入前必须 source CANN set_env.sh。
+- 246 下载 GitHub 受限；本机 PortableGit 偶发 ls/grep/sed 等基础命令丢失（PATH 异常），改用 PowerShell 或 python 单行命令兜底。

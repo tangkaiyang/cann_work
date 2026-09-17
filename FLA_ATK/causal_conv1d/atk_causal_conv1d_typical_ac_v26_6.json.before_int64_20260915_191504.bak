@@ -92,13 +92,13 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           2
         ],
         "range_values": [
           0,
-          0
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -108,12 +108,11 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -124,12 +123,11 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -140,7 +138,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -189,17 +187,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -300,13 +287,13 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           2
         ],
         "range_values": [
           0,
-          0
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -316,12 +303,11 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -332,12 +318,11 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -348,7 +333,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -397,17 +382,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -508,13 +482,13 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           2
         ],
         "range_values": [
           0,
-          0
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -524,12 +498,11 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -540,12 +513,11 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -556,7 +528,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -605,17 +577,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -716,13 +677,13 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           2
         ],
         "range_values": [
           0,
-          0
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -732,12 +693,11 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -748,12 +708,11 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           1
         ],
         "range_values": [
-          0,
           0
         ],
         "backward": false,
@@ -764,7 +723,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -813,17 +772,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,32768],\"cache_indices\":[0],\"initial_state_mode\":[0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -924,13 +872,20 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           9
         ],
         "range_values": [
           0,
-          0
+          4096,
+          8192,
+          12288,
+          16384,
+          20480,
+          24576,
+          28672,
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -940,13 +895,19 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
           0,
-          0
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
         ],
         "backward": false,
         "align_32B": null,
@@ -956,11 +917,17 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0
         ],
@@ -972,7 +939,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -1021,17 +988,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1132,13 +1088,20 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           9
         ],
         "range_values": [
           0,
-          0
+          4096,
+          8192,
+          12288,
+          16384,
+          20480,
+          24576,
+          28672,
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -1148,13 +1111,19 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
           0,
-          0
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
         ],
         "backward": false,
         "align_32B": null,
@@ -1164,11 +1133,17 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0
         ],
@@ -1180,7 +1155,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -1229,17 +1204,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1340,13 +1304,20 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           9
         ],
         "range_values": [
           0,
-          0
+          4096,
+          8192,
+          12288,
+          16384,
+          20480,
+          24576,
+          28672,
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -1356,13 +1327,19 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
           0,
-          0
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
         ],
         "backward": false,
         "align_32B": null,
@@ -1372,11 +1349,17 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0
         ],
@@ -1388,7 +1371,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -1437,17 +1420,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
@@ -1548,13 +1520,20 @@
         "name": "query_start_loc",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           9
         ],
         "range_values": [
           0,
-          0
+          4096,
+          8192,
+          12288,
+          16384,
+          20480,
+          24576,
+          28672,
+          32768
         ],
         "backward": false,
         "align_32B": null,
@@ -1564,13 +1543,19 @@
         "name": "cache_indices",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
           0,
-          0
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
         ],
         "backward": false,
         "align_32B": null,
@@ -1580,11 +1565,17 @@
         "name": "initial_state_mode",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           8
         ],
         "range_values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0,
           0
         ],
@@ -1596,7 +1587,7 @@
         "name": "num_accepted_tokens",
         "type": "tensor",
         "required": false,
-        "dtype": "int64",
+        "dtype": "int64_fixed",
         "shape": [
           0
         ],
@@ -1645,17 +1636,6 @@
         "dtype": "int",
         "shape": null,
         "range_values": 0,
-        "backward": false,
-        "align_32B": null,
-        "outlier_values": null
-      },
-      {
-        "name": "metadata_values",
-        "type": "attr",
-        "required": true,
-        "dtype": "string",
-        "shape": null,
-        "range_values": "{\"query_start_loc\":[0,4096,8192,12288,16384,20480,24576,28672,32768],\"cache_indices\":[0,1,2,3,4,5,6,7],\"initial_state_mode\":[0,0,0,0,0,0,0,0]}",
         "backward": false,
         "align_32B": null,
         "outlier_values": null
