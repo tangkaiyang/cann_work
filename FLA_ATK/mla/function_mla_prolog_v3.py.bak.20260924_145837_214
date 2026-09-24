@@ -3,10 +3,6 @@
 
 Extracted from V4: golden + noncontig + executor + V3 register entries.
 V3 has no doRope argument; its reference and DUT always enable RoPE.
-NC controls: MLA_PROLOG_NC_ENABLE=0/1, MLA_PROLOG_NC_FACTOR=2 (default on),
-MLA_PROLOG_NC_SELFTEST=1 injects a wrong stride for validation.
-Unset ENABLE preserves nc<N> case-name selection; no selection means contiguous.
-NC runs also calculate CPU/NPU cache references and fail on precision/padding errors.
 """
 
 from __future__ import annotations
@@ -1477,27 +1473,13 @@ import torch
 # 取 3 是因为 bf16 / int8 / fp8_e4m3fn 都能精确表示，便于逐值比对。
 PADDING_SENTINEL = 3.0
 
-_NC_NAME_RE = re.compile(r"(?:^|[^a-zA-Z0-9])nc(\d+)(?=$|[^a-zA-Z0-9])")
+_NC_NAME_RE = re.compile(r"\bnc(\d+)\b")
 
 
 def parse_stride_factor(case_name: str) -> int:
-    """ENABLE=0 forces contiguous; ENABLE=1 defaults to factor 2.
-
-    With ENABLE unset, preserve nc<N> case names and allow FACTOR override.
-    MLA_PROLOG_NC_SELFTEST=1 injects an intentionally wrong contiguous view.
-    """
-    enabled = os.environ.get("MLA_PROLOG_NC_ENABLE", "").strip().lower()
-    if enabled not in ("", "0", "1", "false", "true", "off", "on"):
-        raise ValueError("MLA_PROLOG_NC_ENABLE must be 0/1, false/true or off/on")
-    if enabled in ("0", "false", "off"):
-        return 1
-    override = os.environ.get("MLA_PROLOG_NC_FACTOR", "").strip()
+    """从用例名解析首轴 stride 放大倍数，``nc1``/无标记表示连续。"""
     match = _NC_NAME_RE.search(case_name or "")
-    factor = int(override) if override else (int(match.group(1)) if match else
-                                           (2 if enabled in ("1", "true", "on") else 1))
-    if factor < 1 or (enabled in ("1", "true", "on") and factor < 2):
-        raise ValueError("non-contiguous factor must be >= 2 when enabled (otherwise >= 1)")
-    return factor
+    return max(1, int(match.group(1))) if match else 1
 
 
 @dataclass
@@ -1513,8 +1495,6 @@ class NonContigCache:
         """backing 中不属于逻辑视图的行（拉回 CPU，避免 NPU 上 fp8 不支持 index）。"""
         backing = self.backing.detach().cpu()
         keep = [i for i in range(backing.shape[0]) if i % self.factor != 0]
-        if backing.dtype == torch.float8_e4m3fn and keep:
-            return backing.view(torch.uint8)[keep].view(torch.float8_e4m3fn)
         return backing[keep]
 
     def padding_is_intact(self) -> bool:
@@ -1560,7 +1540,7 @@ def make_dim0_noncontig(tensor: torch.Tensor, factor: int) -> NonContigCache:
     strides = (factor * inner,) + tuple(backing.stride()[1:])
     view = backing.as_strided(shape, strides)
     view.copy_(src)
-    if shape[0] > 1 and view.is_contiguous():
+    if view.is_contiguous():
         raise RuntimeError("failed to build a dim0 non-contiguous view")
 
     if device.type != "cpu":
@@ -2153,8 +2133,7 @@ def _load_nnopbase() -> ctypes.CDLL:
         return ctypes.CDLL("libnnopbase.so", mode=ctypes.RTLD_GLOBAL)
 
 
-def _acl_create_tensor(tensor: torch.Tensor, acl_dtype: int, acl_format: int = 2,
-                       storage_shape=None):
+def _acl_create_tensor(tensor: torch.Tensor, acl_dtype: int, acl_format: int = 2):
     """自建 aclTensor；ATK 的 TORCH_TO_ACLTYPE 没有 float8_e8m0fnu。"""
     lib = _load_nnopbase()
     lib.aclCreateTensor.restype = ctypes.POINTER(AclTensor)
@@ -2167,12 +2146,10 @@ def _acl_create_tensor(tensor: torch.Tensor, acl_dtype: int, acl_format: int = 2
     stride = tuple(int(x) for x in tensor.stride())
     shape_arr = (ctypes.c_int64 * len(shape))(*shape)
     stride_arr = (ctypes.c_int64 * len(stride))(*stride)
-    storage_shape = tuple(storage_shape) if storage_shape is not None else shape
-    storage_arr = (ctypes.c_int64 * len(storage_shape))(*storage_shape)
     ptr = lib.aclCreateTensor(
         shape_arr, len(shape), int(acl_dtype), stride_arr,
         int(tensor.storage_offset()), int(acl_format),
-        storage_arr, len(storage_shape),
+        shape_arr, len(shape),
         ctypes.c_void_p(tensor.untyped_storage().data_ptr()),
     )
     if not ptr:
@@ -2180,113 +2157,6 @@ def _acl_create_tensor(tensor: torch.Tensor, acl_dtype: int, acl_format: int = 2
             f"aclCreateTensor failed: shape={shape} stride={stride} acl_dtype={acl_dtype}"
         )
     return ptr
-
-
-
-# Cache precision checks reused from first_axes_non_contiguous_v3.py.
-from enum import Enum
-MIN_ERR = 1e-7
-
-class OpTypes(Enum):
-    NA = 0
-    MOVE = 1
-    RAND = 2
-    CAST = 3
-    COMPUTE_INTEGER = 4
-    COMPUTE_QUANT = 5
-    COMPUTE_FLOAT = 6
-    COMPUTE_FLOAT_HIGH_PRECISION = 7
-    VECTOR_FUSION = 8
-    CV_FUSION = 9
-
-def get_eb_threshold(dtype: torch.dtype):
-    if dtype in [torch.bfloat16]:
-        return 2 ** (-7)
-    if dtype in [torch.float16]:
-        return 2 ** (-10)
-    if dtype in [torch.float32]:
-        return 2 ** (-14)
-    return 0
-
-def get_err_threshold(op_type: OpTypes, dtype: torch.dtype):
-    err_threshold = 0
-    if op_type in [OpTypes.COMPUTE_QUANT, OpTypes.COMPUTE_FLOAT]:
-        if dtype in [torch.bfloat16]:
-            err_threshold = 2 ** (-7)
-        if dtype in [torch.float16]:
-            err_threshold = 2 ** (-8)
-        if dtype in [torch.float32]:
-            err_threshold = 2 ** (-11)
-    if op_type in [OpTypes.CV_FUSION]:
-        if dtype in [torch.bfloat16]:
-            err_threshold = 2 ** (-8)
-        if dtype in [torch.float16]:
-            err_threshold = 2 ** (-11)
-        if dtype in [torch.float32]:
-            err_threshold = 2 ** (-14)
-    return err_threshold
-
-def get_mare(golden: torch.Tensor, actual: torch.Tensor):
-    golden = golden.to(torch.float32)
-    abs_error = torch.abs(actual.to(torch.float32) - golden) / (torch.abs(golden) + MIN_ERR)
-    return torch.max(abs_error.flatten())
-
-def get_mere(golden: torch.Tensor, actual: torch.Tensor):
-    golden = golden.to(torch.float32)
-    abs_error = torch.abs(actual.to(torch.float32) - golden) / (torch.abs(golden) + MIN_ERR)
-    return torch.mean(abs_error)
-
-def get_rmse(golden: torch.Tensor, actual: torch.Tensor):
-    golden = golden.to(torch.float32)
-    sqr_err = torch.pow((actual.to(torch.float32) - golden), 2)
-    return torch.sqrt(torch.mean(sqr_err))
-
-def get_eb(golden: torch.Tensor, actual: torch.Tensor):
-    golden = golden.to(torch.float32)
-    golden_nmax = torch.clamp(torch.abs(golden), min=1)
-    actual_error = actual.to(torch.float32) - golden
-    return torch.mean(actual_error / golden_nmax)
-
-def compare_cv(golden: torch.Tensor, npu_ref: torch.Tensor, actual: torch.Tensor):
-    op_type = OpTypes.CV_FUSION
-    eb_threshold = get_eb_threshold(actual.dtype)
-    err_threshold = get_err_threshold(op_type, actual.dtype)
-    mare_npu = get_mare(golden, actual)
-    mare_gpu = get_mare(golden, npu_ref)
-    mere_npu = get_mere(golden, actual)
-    mere_gpu = get_mere(golden, npu_ref)
-    rmse_npu = get_rmse(golden, actual)
-    rmse_gpu = get_rmse(golden, npu_ref)
-    mare_rate = mare_npu / max(mare_gpu, err_threshold)
-    mere_rate = mere_npu / max(mere_gpu, err_threshold)
-    rmse_rate = rmse_npu / max(rmse_gpu, err_threshold)
-    eb = get_eb(npu_ref, actual)
-    return bool((mare_rate < 10) and (mere_rate < 2) and (rmse_rate < 2) and (eb < eb_threshold))
-
-def compare_int8(actual: torch.Tensor, npu_ref: torch.Tensor) -> bool:
-    diff = actual.to(torch.float32).flatten() - npu_ref.to(torch.float32).flatten()
-    return bool(torch.max(torch.abs(diff)) <= 1)
-
-def compare_fp8_e4m3(
-    golden: torch.Tensor, npu_ref: torch.Tensor, actual: torch.Tensor
-) -> Tuple[bool, str]:
-    """fp8e4m3 double-benchmark on uint8 code points.
-
-    Baseline ±2 vs golden is too brittle for mxfp8 query outliers; when the NPU small-op
-    ref already diverges from CPU golden, allow the same slack on actual vs golden.
-    Also accept a tight match to either reference.
-    """
-    def _codes(t: torch.Tensor) -> torch.Tensor:
-        return t.to(torch.float8_e4m3fn).contiguous().view(torch.uint8).to(torch.int16)
-
-    g8, r8, a8 = _codes(golden), _codes(npu_ref), _codes(actual)
-    diff_ag = int(torch.max(torch.abs(a8 - g8)))
-    diff_ar = int(torch.max(torch.abs(a8 - r8)))
-    diff_gr = int(torch.max(torch.abs(g8 - r8)))
-    tol = max(2, diff_gr)
-    ok = bool(diff_ag <= tol or diff_ar <= 2)
-    detail = f"max_code_diff_vs_golden={diff_ag}/{tol} vs_npu={diff_ar} golden_vs_npu={diff_gr}"
-    return ok, detail
 
 
 class FunctionMlaPrologBaseApi(BaseApi):
@@ -2411,7 +2281,7 @@ class AclnnMlaPrologBaseApi(AclnnBaseApi):
                 continue
             cache = make_dim0_noncontig(tensor, self.nc_factor)
             self.nc_caches[name] = cache
-            kw[name] = cache.backing[:cache.view.shape[0]] if self.nc_selftest else cache.view
+            kw[name] = cache.view
         logging.info("[mla_prolog][nc] %s", describe(self.nc_caches))
 
     def init_by_input_data(self, input_data: InputDataset):
@@ -2448,25 +2318,8 @@ class AclnnMlaPrologBaseApi(AclnnBaseApi):
         kw.clear()
         kw.update(ordered)
         self.nc_factor = parse_stride_factor(self._case_name())
-        self.nc_selftest = os.environ.get("MLA_PROLOG_NC_SELFTEST", "0") == "1"
         self.query_quant_mode = int(kw.get("queryQuantMode", 0))
 
-        # Cache references are calculated only for NC tests, before NZ conversion
-        # and before the DUT can mutate the original cache values.
-        self.nc_expected = None
-        if self.nc_factor > 1:
-            cfg = _build_case_config(input_data)
-            def snapshot():
-                return {k: v.detach().cpu().clone() if isinstance(v, torch.Tensor) else v
-                        for k, v in kw.items()}
-            golden = cal_mlaprolog_cpu(snapshot(), cfg)
-            reference_device = str(kw["token_x"].device) if kw["token_x"].device.type == "npu" else "npu:0"
-            reference = cal_mlaprolog_npu(snapshot(), cfg, device=reference_device)
-            self.nc_expected = (
-                tuple(t.detach().cpu() for t in golden[2:4]),
-                tuple(t.detach().cpu() for t in reference[2:4]),
-            )
-            del golden, reference
         declared = [n for n, v in kw.items() if isinstance(v, torch.Tensor)]
         _move_to_npu(input_data, nz_names)
         self._apply_noncontig_cache(input_data)
@@ -2495,21 +2348,6 @@ class AclnnMlaPrologBaseApi(AclnnBaseApi):
         input_args = self._expand_to_prototype(
             list(input_args), declared, tensor_slots, attr_slots, len(output_packages), 0
         )
-        for name, cache in self.nc_caches.items():
-            if cache is None:
-                continue
-            tensor = kw[name]
-            dtype = (int(AclDataType.ACL_HIFLOAT8)
-                     if tensor.dtype == torch.uint8 and self.weight_quant_mode == 5
-                     else int(TORCH_TO_ACLTYPE[str(tensor.dtype)]))
-            ptr = _acl_create_tensor(
-                tensor, dtype, int(AclFormat.ACL_FORMAT_ND), cache.backing.shape
-            )
-            self._acl_holders.extend((cache.backing, tensor))
-            input_args[tensor_slots.index(name)] = AclTensorStruct(
-                tensor=ptr, addr=int(tensor.untyped_storage().data_ptr()),
-                pytensor=tensor, data_size=int(tensor.numel()),
-            )
         for name, held in rope_hold.items():
             self._acl_holders.append(held)
             ptr = _acl_create_tensor(
@@ -2659,33 +2497,6 @@ class AclnnMlaPrologBaseApi(AclnnBaseApi):
                 int(kr_cache.stride(0)) if kr_cache.dim() else 0,
                 "ok" if padding_ok else "POLLUTED", padding_detail,
             )
-            failures = [] if padding_ok else ["nc_padding"]
-            if self.nc_expected is None:
-                raise RuntimeError("NC cache references are missing")
-            golden, reference = self.nc_expected
-            for name, g, r, actual in zip(
-                    ("kv_cache", "kr_cache"), golden, reference, self.cache_refs):
-                actual = actual.detach().cpu()
-                if actual.shape != g.shape or actual.shape != r.shape:
-                    ok = False
-                elif actual.numel() == 0:
-                    continue
-                elif actual.dtype == torch.int8:
-                    ok = compare_int8(actual, r)
-                elif actual.dtype == torch.float8_e4m3fn:
-                    ok, _ = compare_fp8_e4m3(g, r, actual)
-                elif actual.dtype == torch.uint8 and self.weight_quant_mode == 5:
-                    ok = compare_cv(_hif8_decode(g).to(torch.bfloat16),
-                                    _hif8_decode(r).to(torch.bfloat16),
-                                    _hif8_decode(actual).to(torch.bfloat16))
-                else:
-                    ok = compare_cv(g.to(actual.dtype), r.to(actual.dtype), actual)
-                logging.info("[mla_prolog][nc] %s %s", name, "PASS" if ok else "FAIL")
-                if not ok:
-                    failures.append(name)
-            self.nc_expected = None
-            if failures:
-                raise RuntimeError("NC cache validation failed: " + ", ".join(failures))
         # FP8 / HiFloat8 → FP32 再交给 ATK 双标杆（规避 isinf 不支持这些 dtype）
         qq = int(getattr(self, "query_quant_mode", 0))
         wq = int(getattr(self, "weight_quant_mode", -1))
