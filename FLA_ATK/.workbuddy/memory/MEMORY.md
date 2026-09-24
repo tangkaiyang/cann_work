@@ -23,3 +23,9 @@
 - 两个环境裸 `import torch` 都报 torch_npu 后端加载错，是没 source CANN 的正常现象：先 `source /usr/local/Ascend/ascend-toolkit/set_env.sh` 即可 torch+npu 正常。
 - flash-linear-attention-npu 的顶层包是 `fla` 和 `fla_npu`（不是 flash_linear_attention_npu），fla_npu 导入前必须 source CANN set_env.sh。
 - 246 下载 GitHub 受限；本机 PortableGit 偶发 ls/grep/sed 等基础命令丢失（PATH 异常），改用 PowerShell 或 python 单行命令兜底。
+
+## UniVPN（2026-09-23 修复）
+- UniVPN = 华为 SSL VPN 客户端，装在 `C:\Program Files (x86)\UniVPN`，服务 UniVPNService 常驻；配置在 `%APPDATA%\UniVPN\`，profile 是 `config\蓝区.ini`（网关 123.60.114.225:30010，用户 t30072652）。
+- **sysconfig.ini 是 GBK 编码**（蓝区.ini = C0 B6 C7 F8），修改必须按 GBK 字节级读写，用 UTF-8/ASCII 重写会把 profile 名变 `??.ini` 导致 "profile does not exist"。已设 `ClientServerCheck = 0` 关闭服务端证书校验（网关证书 SAN 为空导致全新登录校验失败、UI 静默退出）；备份在 `sysconfig.ini.bak`。
+- 重启 VPN 用 `C:\Users\admin\restart_univpn.ps1`（WMI Win32_Process.Create 脱离进程树启动）。**注意：沙箱 PowerShell 的 Start-Process 启动的 GUI 程序会随命令结束被杀**，必须用 WMI 方式。
+- 验证连通：VNIC 在"本地连接"上拿 192.168.203.x/21 的 IP；`Test-NetConnection 192.168.13.246 -Port 22` 通即隧道正常。
