@@ -80,10 +80,10 @@ from atk.tasks.api_execute.base_api import BaseApi
 # 原 DUT 适配器可能修正负量化模式、RoPE 或 cacheIndex，应检查实际传入参数。
 # 特殊值文件中的 scalar/超大轴长不在此 68 条中，也未切换到本注册名。
 #
-# error_msg 填写依据：
+# expected_error_msg 填写依据：
 #   weightQuantMode_-1/6、kvCacheQuantMode_-1/4、queryQuantMode_-1/2，
 #   以及三条 RoPE 异常，公开 API 直接返回 ge::GRAPH_FAILED=0xFFFFFFFF，
-#   JSON error_msg 写为字符串 "4294967295"，共 9 条。
+#   JSON expected_error_msg 写为字符串 "4294967295"，共 9 条。
 #   这是公开函数返回值，不是 OP_LOGE 中的 ACLNN_ERR_PARAM_INVALID=161002。
 #   若 Python 包装按 int32 显示，会呈现 -1；本机无 ATK，未确认其消息格式。
 #   13 条 fp16 异常：预期 161002，算子定义与 opbase dtype/format 支持表校验。
