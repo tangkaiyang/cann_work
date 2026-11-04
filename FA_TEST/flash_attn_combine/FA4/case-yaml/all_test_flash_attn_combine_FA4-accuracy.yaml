@@ -1,0 +1,194 @@
+# ATK case design — flash_attn_combine, FA4 accuracy suite.
+#
+# 依据 flash-attention-npu 0.5.0（commit 82a9a8d）的真实实现：
+#   csrc/ascend950/flash_attn_npu_4/flash_api.cpp:138  mha_combine
+#   flash_attn_npu_4/flash_attn_npu_interface.py:1439
+#   flash_attn_npu_4/flash_attn_npu_interface_950.py:1116
+#
+# FA4 的公开签名有 8 个参数：
+#   flash_attn_combine(out_partial, lse_partial, out=None, out_dtype=None,
+#                      cu_seqlens=None, seqused=None, virtual_batch_idx=None,
+#                      return_lse=True)
+#
+# 与 FA3 的关键差异（本 yaml 相比 FA3 的增量）：
+#   1. out_partial 支持 fp16 / bf16 / fp32（低精度内部转 fp32 累加）
+#   2. 多出 cu_seqlens / seqused / virtual_batch_idx / return_lse
+#
+#   atk case -f all_test_flash_attn_combine_FA4-accuracy.yaml \
+#     -p flash_attn_combine_case_generator_fa4.py -s 1234
+name: flash_attn_combine
+api: pytorch
+api_type: function_flash_attn_combine_v4
+version: v2.1
+generate: generate_flash_attn_combine_accuracy_fa4
+dtype_numbers: 192
+extra_numbers: 8
+size_distributions:
+  - values: [[0, 32.0]]
+    ratio: 1.0
+standard:
+  acc:
+    cv_fused_double_benchmark:
+      max_re_ratio: 2.0
+      avg_re_ratio: 1.2
+      root_mean_squared_ratio: 1.2
+  perf: not_key
+  mem: 1.1
+inputs:
+  - name: out_partial
+    type: tensor
+    required: true
+    dtypes:
+      # FA4 放宽到 fp16/bf16/fp32。C++ 校验：
+      #   TORCH_CHECK(partial_dtype == at::kFloat || at::kHalf || at::kBFloat16,
+      #               "out_partial must be fp16, bf16, or fp32")
+      #   低精度会先 out_partial.to(at::kFloat) 再累加。
+      values: [fp32, fp16, bf16]
+    ranges:
+      valid:
+        # 全零范围会让输出恒为 0、相对误差分母趋零被放大，故不配置 [0,0]。
+        values: [[-0.001, 0.001], [-5, 5]]
+        random_types:
+          - name: nd
+            mean: [-100.0, 100.0]
+            std: [1.0, 25.0]
+        custom_dist_ratio: [[0.1, 0.5, 0.0], [0.4, 0.0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        # 5D = BSND (NS,B,S,H,D)，4D = TND (NS,T,H,D)
+        values: [5, 4]
+      dim_values:
+        values: [1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 32, 64, 96, 113, 128, 192, 200, 256]
+      max_length: 8388608
+    boundary:
+      has_empty: true
+      has_scalar: true
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: true
+  - name: lse_partial
+    type: tensor
+    required: true
+    dtypes:
+      # 即使 FA4 允许低精度 partial，lse_partial 仍必须 fp32
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[-5, 5]]
+        random_types:
+          - name: nd
+            mean: [-100.0, 100.0]
+            std: [1.0, 25.0]
+        custom_dist_ratio: [[0.6, 0.0], [0.4, 0.0]]
+      invalid:
+        values: ["-inf"]
+    shapes:
+      dim_numbers:
+        values: [4, 3]
+      dim_values:
+        values: [1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 32, 64, 96, 113, 128, 192, 200, 256]
+      max_length: 8388608
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
+  - name: out_dtype
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: [fp16, bf16, fp32]
+      invalid:
+        values: []
+  # ------------------------------------------------------------------
+  # 以下 5 项是 FA4 相对 FA3 的独有能力，全部为可选输入。
+  # required: false 时未配置则不会出现在 kwargs 中，executor 保持传 None。
+  # ------------------------------------------------------------------
+  - name: out
+    type: tensor
+    required: false
+    # 预分配输出。传入时 out.dtype 权威，覆盖 out_dtype。
+    # ranges 不能为空列表：ATK 的 RandomConfig.choices 无法处理空 population。
+    # 这里给 [0, 1] 作占位，实际内容由 generator 按 out_partial 形状改写。
+    dtypes:
+      values: [fp32, fp16, bf16]
+    ranges:
+      valid:
+        values: [[0, 1]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [4, 3]
+      dim_values:
+        values: [1, 2, 8, 16]
+      max_length: 8388608
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
+  - name: cu_seqlens
+    type: attrs
+    required: false
+    # C++ 校验：1-D int32、numel >= 2（起止偏移）。
+    # 注意：仅校验，不限制实际处理的行数（combine 逐行独立处理）。
+    #
+    # 不能配 tuple_numbers: [1]——那会让 ATK 只产出 1 个元素，
+    # 直接触发 "cu_seqlens must be a 1-D int32 tensor with at least 2 elements"。
+    # 实际长度依赖 seqlen，由 generator 生成 [0, seqlen] 前缀和。
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: []
+  - name: seqused
+    type: attrs
+    required: false
+    # C++ 校验：1-D int32、numel >= 1。同样只校验不生效。
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: []
+    tuple_numbers:
+      values: [1]
+  - name: virtual_batch_idx
+    type: attrs
+    required: false
+    # C++ 校验：连续的 1-D int32 NPU tensor；
+    # dense(5D) 布局下 numel 必须严格等于 batch_size。
+    #
+    # 长度依赖 out_partial 的 batch 维，无法在 yaml 静态声明：
+    # 配 tuple_numbers: [1] 会让 ATK 只产出 1 个元素，
+    # dense 用例必然报 "virtual_batch_idx must have batch_size elements"。
+    # 因此这里只留占位值，实际内容由 executor 按 batch 重建恒等映射 [0..B-1]。
+    dtypes:
+      values: [int]
+    ranges:
+      valid:
+        values: [0]
+      invalid:
+        values: []
+  - name: return_lse
+    type: attr
+    required: false
+    # C++ 支持；False 时返回 (out, None)。
+    dtypes:
+      values: [bool]
+    ranges:
+      valid:
+        values: [true, false]
+      invalid:
+        values: []

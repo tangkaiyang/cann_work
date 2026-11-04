@@ -1,0 +1,83 @@
+# ATK case design generated from:
+#   all_test_flash_attn_combine_v4_bf16fp16_gt500m.json
+#
+# FA4 memory suite. The plugin enforces an out_partial tensor of at least
+# 550 MiB before the output and LSE buffers are added.
+#
+#   atk case -f all_test_flash_attn_combine_v4_bf16fp16_gt500m.yaml \
+#     -p flash_attn_combine_case_generator_fa4.py -s 1234
+name: flash_attn_combine
+api: pytorch
+api_type: function_flash_attn_combine_v4
+version: v2.1
+generate: generate_flash_attn_combine_memory_fa4
+dtype_numbers: 200
+extra_numbers: 0
+standard:
+  acc:
+    cv_fused_double_benchmark:
+      max_re_ratio: 2.0
+      avg_re_ratio: 1.2
+      root_mean_squared_ratio: 1.2
+  perf: not_key
+  mem: 1.05
+inputs:
+  - name: out_partial
+    type: tensor
+    required: true
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[-5, 5]]
+        random_types:
+          - name: nd
+            mean: [-100.0, 100.0]
+            std: [1.0, 25.0]
+        custom_dist_ratio: [[0.5, 0.0], [0.5, 0.0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [5, 4]
+      dim_values:
+        values: [1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 256]
+      max_length: 201326592
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
+  - name: lse_partial
+    type: tensor
+    required: true
+    dtypes:
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[-5, 5]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [4, 3]
+      dim_values:
+        values: [1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 256]
+      max_length: 201326592
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
+  - name: out_dtype
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        values: [fp16, bf16, fp32]
+      invalid:
+        values: []

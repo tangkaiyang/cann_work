@@ -1,0 +1,137 @@
+# ATK case design — flash_attn_combine, FA3 accuracy suite.
+#
+# 依据 flash-attention-npu 0.5.0（commit 82a9a8d）的真实实现：
+#   csrc/ascend950/flash_attn_npu_3/flash_api.cpp:143  mha_combine
+#   flash_attn_npu_3/flash_attn_npu_interface.py:1333
+#   flash_attn_npu_3/flash_attn_npu_interface_950.py:1262
+#
+# FA3 的公开签名只有 4 个参数：
+#   flash_attn_combine(out_partial, lse_partial, out=None, out_dtype=None)
+#
+# 底层 fwd_combine 虽然实现了 cu_seqlens / seqused / return_lse，
+# 但 Python 层未暴露，因此本 yaml 不配置这些输入（详见 common/ISSUE_提交草稿.md）。
+#
+#   atk case -f all_test_flash_attn_combine_FA3-accuracy.yaml \
+#     -p flash_attn_combine_case_generator_fa3.py -s 1234
+name: flash_attn_combine
+api: pytorch
+api_type: function_flash_attn_combine
+version: v2.1
+generate: generate_flash_attn_combine_accuracy_fa3
+dtype_numbers: 192
+extra_numbers: 8
+size_distributions:
+  - values: [[0, 32.0]]
+    ratio: 1.0
+standard:
+  acc:
+    cv_fused_double_benchmark:
+      max_re_ratio: 2.0
+      avg_re_ratio: 1.2
+      root_mean_squared_ratio: 1.2
+  perf: not_key
+  mem: 1.1
+inputs:
+  - name: out_partial
+    type: tensor
+    required: true
+    dtypes:
+      # FA3 只接受 fp32。C++ 校验：
+      #   TORCH_CHECK(out_partial.scalar_type() == at::kFloat,
+      #               "Attention combine function only support fp32 data type")
+      values: [fp32]
+    ranges:
+      valid:
+        # 注意：全零范围（[0,0]）会让输出恒为 0，相对误差分母趋零被放大，
+        # 导致假失败。这里只保留非零分布。
+        values: [[-0.001, 0.001], [-5, 5]]
+        random_types:
+          - name: nd
+            mean: [-100.0, 100.0]
+            std: [1.0, 25.0]
+        custom_dist_ratio: [[0.1, 0.5, 0.0], [0.4, 0.0]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        # 5D = BSND (NS,B,S,H,D)，4D = TND (NS,T,H,D)
+        values: [5, 4]
+      dim_values:
+        # num_splits 上限 256（C++ 校验 num_splits <= 256）；
+        # head_dim 受 UB 预算约束，见下方 generator 的 _fa3_bounds 注释。
+        values: [1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 32, 64, 96, 113, 128, 192, 200, 256]
+      max_length: 8388608
+    boundary:
+      has_empty: true      # seqlen/heads/head_dim=0 时内核提前返回
+      has_scalar: true
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: true
+  - name: lse_partial
+    type: tensor
+    required: true
+    dtypes:
+      # C++ 校验 lse_partial 必须 fp32（FA3/FA4 相同）
+      values: [fp32]
+    ranges:
+      valid:
+        values: [[-5, 5]]
+        random_types:
+          - name: nd
+            mean: [-100.0, 100.0]
+            std: [1.0, 25.0]
+        custom_dist_ratio: [[0.6, 0.0], [0.4, 0.0]]
+      invalid:
+        # 全 -inf 表示整行被 mask；内核把 den clamp 到 1，输出 0 而非 NaN
+        values: ["-inf"]
+    shapes:
+      dim_numbers:
+        # 必须比 out_partial 少一维：lse.dim() == out_partial.dim() - 1
+        values: [4, 3]
+      dim_values:
+        values: [1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 32, 64, 96, 113, 128, 192, 200, 256]
+      max_length: 8388608
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
+  - name: out_dtype
+    type: attr
+    required: true
+    dtypes:
+      values: [string]
+    ranges:
+      valid:
+        # C++ 接受 fp32 / fp16 / bf16 三种输出类型。
+        # 补上 fp32：此前只有 fp16/bf16，fp32 输出路径零覆盖。
+        values: [fp16, bf16, fp32]
+      invalid:
+        values: []
+  - name: out
+    type: tensor
+    required: false
+    # 可选：预分配输出。传入时 out.dtype 权威，会覆盖 out_dtype。
+    # C++ 分支：if (out_.has_value()) { 校验形状精确匹配 }
+    dtypes:
+      values: [fp32, fp16, bf16]
+    ranges:
+      valid:
+        # 不能配空列表：ATK 的 RandomConfig.choices 无法处理空 population。
+        # 这里给 [0, 1] 作占位，实际内容由 generator 按 out_partial 形状改写。
+        values: [[0, 1]]
+      invalid:
+        values: []
+    shapes:
+      dim_numbers:
+        values: [4, 3]
+      dim_values:
+        values: [1, 2, 8, 16]
+      max_length: 8388608
+    boundary:
+      has_empty: false
+      has_scalar: false
+      has_infnan: false
+      has_upper_border: false
+      has_lower_border: false
