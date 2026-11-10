@@ -1,0 +1,1929 @@
+[
+    {
+        "id":  10007,
+        "default_seed":  20261102,
+        "name":  "kda_model_c08_softplus_fp32_s3",
+        "aclnn_name":  "ChunkKdaFwdPrepare",
+        "triton_name":  null,
+        "kernel_name":  null,
+        "version":  "v2.1",
+        "expected_error_msg":  null,
+        "api":  "pytorch",
+        "api_type":  "executor_chunk_kda_fwd_prepare",
+        "aclnn_api_type":  "aclnn_function",
+        "triton_api_type":  "triton_function",
+        "fusion_api_type":  "fusion_function",
+        "fusion_mode":  null,
+        "dist_api_type":  "dist_function",
+        "kernel_api_type":  "kernel_function",
+        "backward":  false,
+        "standard":  {
+                         "acc":  {
+                                     "cv_fused_double_benchmark":  {
+                                                                       "max_re_ratio":  5,
+                                                                       "avg_re_ratio":  1.5,
+                                                                       "root_mean_squared_ratio":  1.5
+                                                                   }
+                                 },
+                         "perf":  "not_key"
+                     },
+        "outputs":  null,
+        "inputs":  [
+                       {
+                           "name":  "q",
+                           "type":  "tensor",
+                           "required":  true,
+                           "dtype":  "bf16",
+                           "shape":  [
+                                         1,
+                                         8,
+                                         131072,
+                                         128
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             0.0
+                                                         ],
+                                                "std":  [
+                                                            0.25
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "k",
+                           "type":  "tensor",
+                           "required":  true,
+                           "dtype":  "bf16",
+                           "shape":  [
+                                         1,
+                                         8,
+                                         131072,
+                                         128
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             0.0
+                                                         ],
+                                                "std":  [
+                                                            0.25
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "v",
+                           "type":  "tensor",
+                           "required":  true,
+                           "dtype":  "bf16",
+                           "shape":  [
+                                         1,
+                                         8,
+                                         131072,
+                                         128
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             0.0
+                                                         ],
+                                                "std":  [
+                                                            0.05
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "g",
+                           "type":  "tensor",
+                           "required":  true,
+                           "dtype":  "fp32",
+                           "shape":  [
+                                         1,
+                                         8,
+                                         131072,
+                                         128
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             0.0
+                                                         ],
+                                                "std":  [
+                                                            1.25
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "beta",
+                           "type":  "tensor",
+                           "required":  true,
+                           "dtype":  "bf16",
+                           "shape":  [
+                                         1,
+                                         8,
+                                         131072
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             0.5
+                                                         ],
+                                                "std":  [
+                                                            0.1
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "scale",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "float",
+                           "shape":  null,
+                           "range_values":  0.08838834764831845,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "layout",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "string",
+                           "shape":  null,
+                           "range_values":  "BNSD",
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "chunk_size",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "int",
+                           "shape":  null,
+                           "range_values":  64,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "epsilon",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "float",
+                           "shape":  null,
+                           "range_values":  1E-06,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "use_qk_l2norm_in_kernel",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  true,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "use_gate_in_kernel",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  true,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "use_beta_sigmoid_in_kernel",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  true,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "allow_neg_eigval",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  false,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "safe_gate",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  false,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "lower_bound",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "float",
+                           "shape":  null,
+                           "range_values":  -5.0,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "use_exp2",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "attr_bool",
+                           "shape":  null,
+                           "range_values":  true,
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "a_log",
+                           "type":  "tensor",
+                           "required":  false,
+                           "dtype":  "fp32",
+                           "shape":  [
+                                         8
+                                     ],
+                           "range_values":  {
+                                                "name":  "nd",
+                                                "mean":  [
+                                                             -4.0
+                                                         ],
+                                                "std":  [
+                                                            0.5
+                                                        ]
+                                            },
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       {
+                           "name":  "dt_bias",
+                           "type":  "tensor",
+                           "required":  false,
+                           "dtype":  "fp32",
+                           "shape":  [
+                                         1024
+                                     ],
+                           "range_values":  "null",
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       },
+                       [
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  0,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  1138,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  2275,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  3404,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  4533,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  5661,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  6782,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  7902,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  9020,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  10128,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  11234,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  12339,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  13443,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  14547,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  15648,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  16747,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  17837,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  18922,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  20007,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  21076,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  22143,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  23207,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  24271,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  25335,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  26398,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  27460,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  28521,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  29582,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  30643,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  31703,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  32763,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  33823,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  34882,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  35941,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  37000,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  38058,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  39115,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  40172,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  41229,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  42285,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  43341,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  44397,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  45453,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  46509,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  47564,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  48619,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  49674,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  50729,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  51784,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  52838,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  53892,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  54946,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  56000,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  57054,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  58108,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  59156,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  60199,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  61239,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  62273,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  63296,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  64315,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  65331,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  66335,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  67337,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  68336,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  69331,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  70308,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  71280,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  72235,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  73180,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  74117,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  75052,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  75981,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  76908,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  77829,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  78745,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  79658,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  80569,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  81476,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  82380,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  83281,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  84180,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  85070,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  85952,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  86824,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  87694,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  88559,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  89424,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  90288,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  91141,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  91989,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  92836,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  93673,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  94510,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  95333,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  96147,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  96951,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  97753,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  98555,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  99347,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  100139,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  100930,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  101721,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  102510,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  103293,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  104073,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  104850,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  105627,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  106403,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  107173,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  107941,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  108704,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  109456,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  110205,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  110950,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  111692,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  112428,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  113160,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  113891,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  114614,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  115336,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  116053,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  116769,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  117482,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  118192,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  118896,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  119597,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  120296,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  120991,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  121684,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  122373,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  123062,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  123751,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  124437,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  125118,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  125792,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  126465,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  127137,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  127809,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  128480,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  129148,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  129813,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  130473,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           },
+                           {
+                               "name":  "cu_seqlens",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "int",
+                               "shape":  null,
+                               "range_values":  131072,
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           }
+                       ],
+                       [
+                           {
+                               "name":  "chunk_indices",
+                               "type":  "attrs",
+                               "required":  false,
+                               "dtype":  "string",
+                               "shape":  null,
+                               "range_values":  "null",
+                               "backward":  false,
+                               "align_32B":  null,
+                               "outlier_values":  null
+                           }
+                       ],
+                       {
+                           "name":  "backward_mode",
+                           "type":  "attr",
+                           "required":  true,
+                           "dtype":  "string",
+                           "shape":  null,
+                           "range_values":  "save",
+                           "backward":  false,
+                           "align_32B":  null,
+                           "outlier_values":  null
+                       }
+                   ],
+        "acl_json":  "",
+        "method_inputs":  null,
+        "tensor_input":  null,
+        "compute_times":  null,
+        "save_name":  "chunk_kda_fwd_prepare",
+        "uuid":  null,
+        "downloaded":  false,
+        "is_boundary":  true,
+        "xrun_cs_name":  null,
+        "xrun_data":  null,
+        "strategy":  null
+    }
+]
